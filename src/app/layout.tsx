@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-
 const inter = Inter({ subsets: ["latin"] });
+import QueryProvider from "./utils/query/provider";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -14,9 +14,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  
   return (
     <html lang="en">
+        <QueryProvider>
       <body className={inter.className}>{children}</body>
+        </QueryProvider>
     </html>
   );
 }
