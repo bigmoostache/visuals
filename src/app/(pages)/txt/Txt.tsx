@@ -2,8 +2,8 @@
 import { useSearchParams } from 'next/navigation'
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
-import { QueryClient, QueryClientProvider, useQuery } from 'react-query'
 import { useEffect, useState } from 'react'
+import { Suspense } from 'react'
 
 const Txt = () => {
     // NO-CHANGE Retrieving URL
@@ -76,4 +76,14 @@ const Txt = () => {
         </div>
     );
 }
-export default Txt;
+
+const TxtPage = () => {
+    return (
+      // You could have a loading skeleton as the `fallback` too
+      <Suspense>
+        <Txt />
+      </Suspense>
+    )
+}
+
+export default TxtPage;
