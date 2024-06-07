@@ -181,7 +181,6 @@ const Newsletter = () => {
         if (!data) return;
         const reader = new FileReader();
         reader.onload = function (e) {
-            console.log(e.target?.result)
             setJsonNL(JSON.parse(e.target?.result as string) as NewsletterInterface);
         }
         reader.readAsText(data);

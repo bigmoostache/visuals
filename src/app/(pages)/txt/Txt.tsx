@@ -5,7 +5,7 @@ import usePatchFile from '../(hooks)/usePatchFile';
 import { useEffect, useState } from 'react'
 import { Suspense } from 'react'
 
-const Txt = () => {
+const Plan = () => {
     // NO-CHANGE Retrieving URL
     const searchParams = useSearchParams()
     const url = searchParams.get('url')
@@ -78,13 +78,13 @@ const Txt = () => {
     );
 }
 
-const TxtPage = () => {
+const PlanPage = () => {
     return (
       // You could have a loading skeleton as the `fallback` too
       <Suspense>
-        <Txt />
+        <Plan />
       </Suspense>
     )
 }
 
-export default TxtPage;
+export default PlanPage;
