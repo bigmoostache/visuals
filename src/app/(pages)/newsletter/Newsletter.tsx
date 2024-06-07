@@ -1,69 +1,76 @@
 "use client";
-import {useSearchParams} from 'next/navigation'
+import {useSearchParams} from 'next/navigation';
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
-import {useEffect, useState} from 'react'
-import {Suspense} from 'react'
-import styles from './newsletter.module.css';
+import {useEffect, useState} from 'react';
+import {Suspense} from 'react';
+
+
 import {
     ArticleInterface,
     MetricInterface,
-    NewsletterInterface, SummaryItemInterface
+    NewsletterInterface,
+    SummaryItemInterface
 } from "@/app/(pages)/newsletter/interfaces";
-
 
 // ******************************************************
 // ******************  SUMMARY CARDS ********************
 // ******************************************************
-const SummaryCard: React.FC<SummaryItemInterface> = ({title, entries}) => (
-    <div className="p-4 bg-white shadow-md rounded-md mb-4">
+const SummaryCard: React.FC<SummaryItemInterface> = ({ title, entries }) => (
+    <div className="p-4 bg-white shadow-md rounded-md mb-4 w-full">
         <h3 className="text-xl font-semibold mb-2">{title}</h3>
-        {entries.map((entry) => (
-            <p key={entry.reference_id} className="text-gray-700">
-                <strong>{entry.title}:</strong> {entry.analysis}
-            </p>
-        ))}
+        <ul className="list-disc pl-20 text-gray-700">
+            {entries.map((entry) => (
+                <li key={entry.reference_id}>
+                    <strong><a href={`#${entry.reference_id}`} className="underline ml-1">{entry.title} </a>:</strong>
+
+                    {entry.analysis}
+
+                </li>
+            ))}
+        </ul>
     </div>
 );
-
 
 // ******************************************************
 // ********************  METRIC CARDS *******************
 // ******************************************************
-
-const MetricCard: React.FC<MetricInterface> = ({metric, value, previous_value}) => {
+const MetricCard: React.FC<MetricInterface> = ({metric, value, unit, previous_value, previous_relative_time}) => {
     const change = value - previous_value;
-    const isPositive = change > 0;
+    const isPositive = change >= 0;
 
     return (
-        <div className="p-4 bg-white shadow-md rounded-md mb-4">
-            <h3 className="text-xl font-semibold mb-2">{metric}</h3>
-            <p className={`text-${isPositive ? 'green' : 'red'}-600`}>
-                <strong>{value}</strong> {isPositive ? <UpArrow /> : <DownArrow />}
+        <div className="bg-white text-gray-900 p-4 rounded-lg shadow-md">
+            <h3 className="text-sm text-gray-500 mb-1">{metric}</h3>
+            <p className="text-2xl font-bold mb-1">{value.toFixed(2)} {unit}</p>
+            <p className={`text-lg ${isPositive ? 'text-green-500' : 'text-red-500'} flex`}>
+                {isPositive ? <UpArrow/> : <DownArrow/>} {change.toFixed(2)}%
             </p>
+            <p className="text-sm mb-1  text-gray-400">from {previous_relative_time}</p>
         </div>
+
     );
 };
 
 const UpArrow: React.FC = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-        <path fill="none" d="M0 0h24v24H0z"/>
-        <path d="M12 17.27L18.18 24l-1.64-7.03L22 9H2v8.27l5.46 4.73L12 17.27z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16"
+         height="16">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18"/>
     </svg>
 );
 
 const DownArrow: React.FC = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-        <path fill="none" d="M0 0h24v24H0z"/>
-        <path d="M12 7.27L18.18 0l-1.64 7.03L22 15H2v-8.27l5.46 4.73L12 7.27z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16"
+         height="16">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
     </svg>
 );
 
 // ******************************************************
 // ********************  ARTICLE CARDS *******************
 // ******************************************************
-
 const ArticleCard: React.FC<ArticleInterface> = ({
+                                                     reference_id,
                                                      title,
                                                      pertinence_score,
                                                      analysis,
@@ -73,44 +80,46 @@ const ArticleCard: React.FC<ArticleInterface> = ({
                                                      source,
                                                      author,
                                                      sentiment,
+                                                     image,
                                                  }) => (
-    <div className="p-4 bg-white shadow-md rounded-md mb-4">
-        <h3 className="text-xl font-semibold mb-2">{title}</h3>
-        <p className="text-gray-700">Pertinence score: {pertinence_score}</p>
-        <ul className="list-disc pl-5 text-gray-700 mb-2">
-            {analysis.map((item, index) => (
-                <li key={index}>{item}</li>
-            ))}
-        </ul>
-        <p className="text-gray-700 mb-2">{summary}</p>
-        <p className="text-gray-700 mb-2">
-            Tags:
-            {tags.map((item, index) => (
-                <span key={index} className="inline-block bg-gray-200 rounded-full px-2 py-1 text-xs font-semibold text-gray-700 mr-2">
-                    {item}
-                </span>
-            ))}
-        </p>
-        <p className="text-gray-700 mb-2">Localization: {localization}</p>
-        <p className="text-gray-700 mb-2">Source: {source}</p>
-        <p className="text-gray-700 mb-2">Author: {author}</p>
-        <p className="text-gray-700 mb-2">Sentiment: {sentiment}</p>
+    <div id={reference_id} className="flex bg-white shadow-md rounded-md mb-2 p-4">
+        {image && (
+            <img
+                src={`data:image/jpeg;base64,${image.substring(11)}`}
+                alt="Article"
+                className="w-48 h-48 object-cover rounded mr-4"
+                style={{ width: '200px', height: '200px' }}
+            />
+        )}
+        <div className="flex-1">
+            <div className="flex justify-between items-center mb-2">
+                <h3 className="text-xl font-semibold">{title}</h3>
+                <div className={`text-2xl ${sentiment === 'positive' ? 'text-green-500' : 'text-red-500'}`}>
+                    {sentiment === 'positive' ? '👍' : '👎'}
+                </div>
+            </div>
+            <p className="text-gray-600 mb-2">{source} ({localization}) - {author}</p>
+            <hr className="mb-4" />
+            <p className="text-gray-700 mb-4">{summary}</p>
+            <ul className="list-disc pl-5 text-gray-700 mb-4">
+                {analysis.map((item, index) => (
+                    <li key={index}>{item}</li>
+                ))}
+            </ul>
+            <p className="text-gray-700">Pertinence score: {pertinence_score}</p>
+        </div>
     </div>
 );
 
-
 const Newsletter = () => {
-    // NO-CHANGE Retrieving URL
-    const searchParams = useSearchParams()
-    const url = searchParams.get('url')
-    // NO-CHANGE Retrieving BLOB
-    const {data} = useGetFile({fetchUrl: url as string})
-    // Local states, you may modify this for other types
+    const searchParams = useSearchParams();
+    const url = searchParams.get('url');
+    const {data} = useGetFile({fetchUrl: url as string});
     const [text, setText] = useState<string>('');
     const [jsonNL, setJsonNL] = useState<NewsletterInterface>();
     const [updatable, setUpdatable] = useState<boolean>(false);
     const [updatableAgain, setUpdatableAgain] = useState<boolean>(false);
-    // Local conversion blob -> local type
+
     useEffect(() => {
         if (!data) return;
         const reader = new FileReader();
@@ -120,16 +129,16 @@ const Newsletter = () => {
         }
         reader.readAsText(data);
     }, [data]);
-    // Local conversion local type -> blob
+
     const convertBackToFile = (text: string) => {
         const blob = new Blob([text], {type: 'text/plain'});
         return new File([blob], 'filename.txt', {lastModified: Date.now(), type: blob.type});
     }
-    // NO-CHANGE Updating BLOB imports
+
     const {mutate, isLoading, isSuccess} = usePatchFile(
         {fetchUrl: url as string}
     );
-    // Updating BLOB local logic (especially, onSuccess)
+
     const onSubmit = async () => {
         console.log('submit');
         setUpdatableAgain(false);
@@ -138,19 +147,34 @@ const Newsletter = () => {
 
     return (
         jsonNL &&
-        <div className="max-w-7xl mx-auto p-4">
-            <div className="summary-section grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {jsonNL!.summary.map((summaryItem) => (
-                    <SummaryCard key={summaryItem.title} {...summaryItem} />
-                ))}
+        <div className="max-w-[60rem] mx-auto p-4 bg-white">
+            <div className="mb-2">
+                <img
+                    src="https://images.unsplash.com/photo-1516689948391-3379ec7c7df0?q=80&w=1974&h=450&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"/>
             </div>
-            <div className="metrics-section grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            <div className="text-right text-gray-600 mb-6">
+                {new Date(jsonNL.timestamp).toLocaleDateString()}
+            </div>
+            <div className="bg-gray-100 p-4 rounded-lg mb-8">
+                <p className="text-gray-700">{jsonNL.summary_analysis}</p>
+            </div>
+            <h2 className="text-2xl font-bold mt-8 mb-4">Metrics</h2>
+            <div className="metrics-section flex gap-4 mb-4">
                 {jsonNL!.metrics.map((metric) => (
                     <MetricCard key={metric.metric} {...metric} />
                 ))}
             </div>
-            <div className="articlesSection grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                {jsonNL!.articles.map((article) => (
+            <h2 className="text-2xl font-bold mb-4">Summary</h2>
+            <h2 className="text-2xl font-bold mb-4">Summary</h2>
+            <div className="summary-section mb-8">
+                {jsonNL.summary.map((summaryItem) => (
+                    <SummaryCard key={summaryItem.title} {...summaryItem} />
+                ))}
+            </div>
+
+            <h2 className="text-2xl font-bold mt-8 mb-4">Articles</h2>
+            <div className="articlesSection grid grid-cols-1 gap-2">
+                {jsonNL.articles.map((article) => (
                     <ArticleCard key={article.reference_id} {...article} />
                 ))}
             </div>
@@ -160,7 +184,6 @@ const Newsletter = () => {
 
 const NewsletterPage = () => {
     return (
-        // You could have a loading skeleton as the `fallback` too
         <Suspense>
             <Newsletter/>
         </Suspense>

@@ -22,6 +22,8 @@ export interface ArticleInterface {
     source: string;
     author: string;
     sentiment: string;
+    image?: string;
+    url?: string;
 }
 
 export interface MetricInterface {
