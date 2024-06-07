@@ -12,7 +12,7 @@ const FigureCard: React.FC<Figure> = ({
     const [modalIsOpen, setModalIsOpen] = useState(false);
 
     const imageUrl = (source_is_internal && contents) ?
-        `data:image/jpeg;base64,${contents?.substring(11)}` : 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=500&h=500&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' //source_id;
+        `data:image/jpeg;base64,${contents?.substring(11)}` : 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=500&h=500&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; // Placeholder image
 
     const openModal = () => {
         setModalIsOpen(true);
@@ -23,10 +23,10 @@ const FigureCard: React.FC<Figure> = ({
     };
 
     return (
-        <div className="p-2 bg-gray-100 rounded-md mb-2">
+        <div className="p-2 bg-gray-100 rounded-md mb-2 shadow-sm">
             <div className="cursor-pointer" onClick={openModal}>
                 <h4 className="font-semibold">{title}</h4>
-                <img src={imageUrl} alt={title} className="w-24 h-24 object-cover"/>
+                <img src={imageUrl} alt={title} className="w-24 h-24 object-cover rounded-md"/>
             </div>
 
             <Modal
@@ -39,7 +39,7 @@ const FigureCard: React.FC<Figure> = ({
                 <div className="bg-white p-6 rounded-lg w-full max-w-md mx-auto">
                     <button className="text-right mb-4" onClick={closeModal}>Close</button>
                     <h4 className="text-xl font-semibold mb-2">{title}</h4>
-                    <img src={imageUrl} alt={title} className="w-full h-auto mb-2"/>
+                    <img src={imageUrl} alt={title} className="w-full h-auto mb-2 rounded-md"/>
                     <p><strong>Comment:</strong> {comment}</p>
                     {user_feedback && <p><strong>User Feedback:</strong> {user_feedback}</p>}
                 </div>
