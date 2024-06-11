@@ -8,7 +8,13 @@
   --background-end-rgb: 255, 255, 255;
 
   --primary: #28694B;
+  --primary-500: #399C6B;
+  --primary-200:#1F523B;
+  --primary-800: #E1F6D3;
   --secondary: #FF5F2D;
+  --secondary-500: #FF5A22;
+  --secondary-800: #BF481F;
+  --secondary-200: #FFA07A;
   --tertiary: #F3F3EDFF
 }
 

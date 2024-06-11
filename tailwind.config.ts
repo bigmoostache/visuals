@@ -16,10 +16,15 @@ const config: Config = {
       colors: {
         primary: {
           DEFAULT: 'var(--primary)',
-          500: 'var(--primary)', // or you can set other shades if needed
+          500: 'var(--primary-500)',
+          800: 'var(--primary-800)',
+          200: 'var(--primary-200)',
         },
         secondary: {
           DEFAULT: 'var(--secondary)',
+          200: 'var(--secondary-200)',
+          500: 'var(--secondary-500)',
+          800: 'var(--secondary-800)',
         },
         tertiary: {
           DEFAULT: 'var(--tertiary)',
