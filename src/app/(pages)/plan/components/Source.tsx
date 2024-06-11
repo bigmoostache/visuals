@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Modal from 'react-modal';
 import FigureCard from "@/app/(pages)/plan/components/Figure";
+import {FaTimes} from "react-icons/fa";
 
 const SourceCard: React.FC<Source> = ({ id, title, citation, figures, full_text }) => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -25,13 +26,15 @@ const SourceCard: React.FC<Source> = ({ id, title, citation, figures, full_text 
                 className="fixed inset-0 flex items-center justify-center p-4 bg-gray-900 bg-opacity-75"
                 overlayClassName="fixed inset-0 bg-black bg-opacity-50"
             >
-                <div className="bg-white p-6 rounded-lg w-full max-w-2xl mx-auto">
-                    <button className="text-right mb-4 text-primary" onClick={closeModal}>Close</button>
+                <div className="bg-white p-6 rounded-lg w-full max-w-2xl mx-auto relative">
+                    <button className="absolute top-2 right-2 text-gray-600" onClick={closeModal}>
+                        <FaTimes size={20}/>
+                    </button>
                     <h4 className="text-xl font-semibold mb-2">{title}</h4>
                     <div className="mb-4">
                         <strong>Figures:</strong>
                         <div className="flex flex-wrap">
-                            {figures.map(fig => <FigureCard key={fig.title} {...fig} />)}
+                            {figures.map(fig => <FigureCard key={fig.title} figure={fig} />)}
                         </div>
                     </div>
                     <div className="mb-4">

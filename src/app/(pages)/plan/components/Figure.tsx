@@ -1,26 +1,20 @@
-// components/Figure.tsx
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Modal from 'react-modal';
 import { FaEdit, FaSave, FaTimes } from 'react-icons/fa';
-import { usePlan } from '@/app/(pages)/plan/context/PlanContext';
+import FeedbackComponent from "@/app/(pages)/plan/components/feedback";
 
-interface FigureCardProps extends Figure {}
+interface FigureCardProps {
+    figure:Figure
+}
 
 const FigureCard: React.FC<FigureCardProps> = ({
-                                                   title,
-                                                   comment,
-                                                   source_id,
-                                                   source_is_internal,
-                                                   contents,
-                                                   user_feedback,
+                                                   figure,
                                                }) => {
+
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [isEditingFeedback, setIsEditingFeedback] = useState(false);
-    const [feedback, setFeedback] = useState(user_feedback || '');
-    const { updateFeedback } = usePlan();
-
-    const imageUrl = (source_is_internal && contents) ?
-        `data:image/jpeg;base64,${contents?.substring(11)}` : 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=500&h=500&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; // Placeholder image
+    const imageUrl = (figure.source_is_internal && figure.contents) ?
+        `data:image/jpeg;base64,${figure.contents?.substring(11)}` : 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=500&h=500&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; // Placeholder image
 
     const openModal = () => {
         setModalIsOpen(true);
@@ -34,20 +28,12 @@ const FigureCard: React.FC<FigureCardProps> = ({
         setIsEditingFeedback(!isEditingFeedback);
     };
 
-    const handleFeedbackChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setFeedback(e.target.value);
-    };
-
-    const saveFeedback = () => {
-        setIsEditingFeedback(false);
-        updateFeedback(source_id, feedback);
-    };
 
     return (
         <div className="p-2 bg-gray-100 rounded-md mb-2 shadow-sm mr-4 w-40 flex flex-col items-center">
-            <div className="cursor-pointer" onClick={openModal}>
-                <img src={imageUrl} alt={title} className="w-9/12 h-auto object-cover rounded-md mx-auto"/>
-                <h4 className="text-sm font-light text-center mt-2 truncate w-full">{title}</h4>
+            <div className="cursor-pointer contents" onClick={openModal}>
+                <img src={imageUrl} alt={figure.title} className="w-9/12 h-auto object-cover rounded-md mx-auto"/>
+                <h4 className="text-sm font-light text-center mt-2 truncate w-full overflow-hidden whitespace-nowrap text-overflow-ellipsis">{figure.title}</h4>
             </div>
 
             <Modal
@@ -61,32 +47,17 @@ const FigureCard: React.FC<FigureCardProps> = ({
                     <button className="absolute top-2 right-2 text-gray-600" onClick={closeModal}>
                         <FaTimes size={20} />
                     </button>
-                    <h4 className="text-xl font-semibold mb-2 text-center">{title}</h4>
-                    <img src={imageUrl} alt={title} className="w-full h-auto mb-2 rounded-md"/>
+                    <h4 className="text-xl font-semibold mb-2 text-center">{figure.title}</h4>
+                    <img src={imageUrl} alt={figure.title} className="w-full h-auto mb-2 rounded-md"/>
 
                     <div className="flex items-center mb-2">
                         <strong className="mr-2">Comment:</strong>
                         <FaEdit className="cursor-pointer text-gray-600" onClick={toggleFeedbackEdit} />
                     </div>
-                    <p>{comment}</p>
+                    <p>{figure.comment}</p>
 
-                    {isEditingFeedback && (
-                        <div className="mt-2">
-                            <textarea
-                                value={feedback}
-                                onChange={handleFeedbackChange}
-                                className="w-full p-2 border rounded-md"
-                                placeholder="Enter your feedback here"
-                            />
-                            <button onClick={saveFeedback} className="mt-2 bg-primary text-white py-1 px-2 rounded-md flex items-center">
-                                <FaSave className="mr-1" /> Save
-                            </button>
-                        </div>
-                    )}
-
-                    {user_feedback && (
-                        <p className="mt-2 text-secondary">{user_feedback}</p>
-                    )}
+                    <FeedbackComponent className="my-2" field="user" isOpen={isEditingFeedback}
+                                       object={figure} onToogleFeedback={toggleFeedbackEdit}></FeedbackComponent>
                 </div>
             </Modal>
         </div>

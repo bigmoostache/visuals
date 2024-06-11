@@ -20,9 +20,9 @@ interface Figure {
     title: string;
     comment: string;
     source_id: string;
-    source_is_internal: boolean; // If internal, source_id should be the id of one of the sources
+    source_is_internal: boolean;
     contents?: string; // base64 encoded string
-    user_feedback?: string; // If set title and comment will be iterated. Context will be taken into account.
+    user_feedback?: string;
 }
 
 interface Section {

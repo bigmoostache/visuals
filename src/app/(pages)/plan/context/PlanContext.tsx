@@ -2,12 +2,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {useSearchParams} from "next/navigation";
 import useGetFile from '@/app/(pages)/(hooks)/useGetFile';
-
+import usePatchFile from '@/app/(pages)/(hooks)/usePatchFile';
 
 interface PlanContextType {
     plan: PlanInterface | undefined;
     setPlan: React.Dispatch<React.SetStateAction<PlanInterface | undefined>>;
-    updateFeedback: (source_id: string, feedback: string) => void;
+    updateFeedback: () => void;
     isLoading: boolean;
 }
 
@@ -19,8 +19,11 @@ export const PlanProvider: React.FC<{ children: ReactNode }> = ({ children}) => 
     const url = searchParams.get('url')
     if(!url){throw "DATA URL NOT PROVIDED"}
     const [plan, setPlan] = useState<PlanInterface>();
+    const [updatable, setUpdatable] = useState<boolean>(false);
+    const [updatableAgain, setUpdatableAgain] = useState<boolean>(false);
+
     // NO-CHANGE Retrieving BLOB
-    const { data, isLoading } = useGetFile({ fetchUrl: url });
+    const { data } = useGetFile({ fetchUrl: url });
 
     useEffect(() => {
         if (!data) return;
@@ -30,16 +33,18 @@ export const PlanProvider: React.FC<{ children: ReactNode }> = ({ children}) => 
         };
         reader.readAsText(data);
     }, [data]);
-
-    const updateFeedback = (source_id: string, feedback: string) => {
-        setPlan(prevPlan => {
-            if (!prevPlan) return prevPlan;
-            const updatedPlan = { ...prevPlan };
-            updatedPlan.figures = updatedPlan.figures.map(fig =>
-                fig.source_id === source_id ? { ...fig, user_feedback: feedback } : fig
-            );
-            return updatedPlan;
-        });
+// Local conversion local type -> blob
+    const convertBackToFile = (text: string) => {
+        const blob = new Blob([text], {type: 'text/plain'});
+        return new File([blob], 'filename.txt', { lastModified: Date.now(), type: blob.type });
+    }
+    // NO-CHANGE Updating BLOB imports
+    const { mutate, isLoading, isSuccess } = usePatchFile(
+        {fetchUrl: url as string}
+    );
+    const updateFeedback = () => {
+        //setUpdatableAgain(false);
+        //mutate(convertBackToFile(JSON.stringify(plan)));
     };
 
     
