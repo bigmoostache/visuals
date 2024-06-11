@@ -1,0 +1,175 @@
+{
+  "url": "http://localhost:3000/plan?url=https%3A//pipelines.blends.fr/dev%3Fdataset_id%3D942%26file_access_token%3Dad809a25-e402-4e49-9791-6a229251d09b2024-06-07%2016%3A16%3A14.723225",
+  "contents": {
+    "title": "Intro",
+    "title_feedback": null,
+    "abstract": "This is the introduction abstract.",
+    "abstract_feedback": null,
+    "themes": [
+      "theme1",
+      "theme2"
+    ],
+    "themes_feedback": null,
+    "references": [
+      {
+        "source_id": "source1",
+        "start": 0,
+        "end": 10,
+        "comment": "Introduction reference",
+        "score": 90,
+        "user_frozen": false
+      }
+    ],
+    "references_feedback": null,
+    "redaction_directives": null,
+    "full_text": "This is the full text of the introduction.",
+    "figures": [
+      {
+        "title": "Figure 1",
+        "comment": "This is a figure comment.",
+        "source_id": "source1",
+        "source_is_internal": true,
+        "contents": null,
+        "user_feedback": null
+      }
+    ],
+    "subsections_feedback": "",
+    "subsections": [
+      {
+        "title": "Section 1",
+        "title_feedback": null,
+        "abstract": "This is the abstract of section 1.",
+        "abstract_feedback": null,
+        "themes": [
+          "theme1.1",
+          "theme1.2"
+        ],
+        "themes_feedback": null,
+        "references": [
+          {
+            "source_id": "source2",
+            "start": 10,
+            "end": 20,
+            "comment": "Section 1 reference",
+            "score": 80,
+            "user_frozen": false
+          }
+        ],
+        "references_feedback": null,
+        "redaction_directives": null,
+        "full_text": "This is the full text of section 1.",
+        "figures": [
+          {
+            "title": "Figure 2",
+            "comment": "This is a figure comment for section 1.",
+            "source_id": "source2",
+            "source_is_internal": true,
+            "contents": null,
+            "user_feedback": null
+          }
+        ],
+        "subsections_feedback": "",
+        "subsections": [
+          {
+            "title": "Subsection 1.1",
+            "title_feedback": null,
+            "abstract": "This is the abstract of subsection 1.1.",
+            "abstract_feedback": null,
+            "themes": [
+              "theme1.1.1",
+              "theme1.1.2"
+            ],
+            "themes_feedback": null,
+            "references": [
+              {
+                "source_id": "source3",
+                "start": 20,
+                "end": 30,
+                "comment": "Subsection 1.1 reference",
+                "score": 85,
+                "user_frozen": false
+              }
+            ],
+            "references_feedback": null,
+            "redaction_directives": null,
+            "full_text": "This is the full text of subsection 1.1.",
+            "figures": [
+              {
+                "title": "Figure 3",
+                "comment": "This is a figure comment for subsection 1.1.",
+                "source_id": "source3",
+                "source_is_internal": true,
+                "contents": null,
+                "user_feedback": null
+              }
+            ],
+            "subsections_feedback": "",
+            "subsections": []
+          },
+          {
+            "title": "Subsection 1.2",
+            "title_feedback": null,
+            "abstract": "This is the abstract of subsection 1.2.",
+            "abstract_feedback": null,
+            "themes": [
+              "theme1.2.1",
+              "theme1.2.2"
+            ],
+            "themes_feedback": null,
+            "references": [
+              {
+                "source_id": "source3",
+                "start": 30,
+                "end": 40,
+                "comment": "Subsection 1.2 reference",
+                "score": 75,
+                "user_frozen": false
+              }
+            ],
+            "references_feedback": null,
+            "redaction_directives": null,
+            "full_text": "This is the full text of subsection 1.2.",
+            "figures": [
+              {
+                "title": "Figure 4",
+                "comment": "This is a figure comment for subsection 1.2.",
+                "source_id": "source3",
+                "source_is_internal": true,
+                "contents": "___ASCII___/9j/4QMARXhpZgAATU0AKgAAAAgABwEOAAIAAAIAAAAAYgEaAAUAAAABAAACYgEbAAUAAA(...)U/rRRRS6UUUUQbbUtqKKBz9aXf+tFFA/7xSoooA9KKKKD/9k=",
+                "user_feedback": null
+              }
+            ],
+            "subsections_feedback": "",
+            "subsections": []
+          }
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "id": "source1",
+      "title": "Source 1 Title",
+      "full_text": "Full text of source 1.",
+      "citation": "Source 1 citation.",
+      "figures": [],
+      "penalization_factor": 1
+    },
+    {
+      "id": "source2",
+      "title": "Source 2 Title",
+      "full_text": "Full text of source 2.",
+      "citation": "Source 2 citation.",
+      "figures": [],
+      "penalization_factor": 1
+    },
+    {
+      "id": "source3",
+      "title": "Source 3 Title",
+      "full_text": "Full text of source 3.",
+      "citation": "Source 3 citation.",
+      "figures": [],
+      "penalization_factor": 1
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import Image from "next/image";
+
 import Txt from "./Txt";
 
 export default function Home() {

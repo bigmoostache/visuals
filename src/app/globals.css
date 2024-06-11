@@ -6,6 +6,16 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+
+  --primary: #28694B;
+  --primary-500: #399C6B;
+  --primary-200:#1F523B;
+  --primary-800: #E1F6D3;
+  --secondary: #FF5F2D;
+  --secondary-500: #FF5A22;
+  --secondary-800: #BF481F;
+  --secondary-200: #FFA07A;
+  --tertiary: #F3F3EDFF
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,3 +41,18 @@ body {
     text-wrap: balance;
   }
 }
+
+
+
+/*
+"#FF5F2D", // Main color (orange)
+"#28694B", // Main color (green)
+"#FF8C5A", // Lighter orange
+"#74A57F", // Lighter green
+"#FFB384", // Soft orange
+"#3E9271", // Softer green
+"#FFDAAA", // Very light orange
+"#A3D4BC", // Very light green
+"#FFD6C1", // Pastel orange
+"#8BB6A9", // Pastel green
+*/
