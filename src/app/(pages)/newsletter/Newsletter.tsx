@@ -18,7 +18,7 @@ import {
 // ******************************************************
 const SummaryCard: React.FC<SummaryItemInterface> = ({title, entries}) => (
     <div className="p-4 bg-white shadow-md rounded-md mb-4 w-full">
-        <h3 className="text-xl font-semibold mb-2">{title}</h3>
+        <h3 className="text-gray-900 text-xl font-semibold mb-2">{title}</h3>
         <ul className="list-disc pl-20 text-gray-700">
             {entries.map((entry) => (
                 <li key={entry.reference_id}>
@@ -42,9 +42,9 @@ const MetricCard: React.FC<MetricInterface> = ({metric, value, unit, previous_va
     return (
         <div className="bg-white text-gray-900 p-4 rounded-lg shadow-md">
             <h3 className="text-sm text-gray-500 mb-1">{metric}</h3>
-            <p className="text-2xl font-bold mb-1">{value.toFixed(2)} {unit}</p>
-            <p className={`text-lg ${isPositive ? 'text-green-500' : 'text-red-500'} flex items-center`}>
-                {isPositive ? <UpArrow/> : <DownArrow/>} {change.toFixed(2)}%
+            <p className="text-lg font-bold mb-1">{value.toFixed(2)} {unit}</p>
+            <p className={`text-md ${isPositive ? 'text-green-500' : 'text-red-500'} flex items-center`}>
+                {isPositive ? <UpArrow/> : <DownArrow/>} {change.toFixed(2)}{unit}
             </p>
             <p className="text-sm mb-1  text-gray-400">from {previous_relative_time}</p>
         </div>
@@ -127,18 +127,16 @@ const ArticleCard: React.FC<ArticleInterface> = ({
                                                      url
                                                  }) => (
     <div id={reference_id} className="flex bg-white shadow-md rounded-md mb-2 p-4">
-        {image && (
-            <img
-                src={`data:image/jpeg;base64,${image.substring(11)}`}
-                alt="Article"
-                className="w-48 h-48 object-cover rounded mr-4"
-                style={{width: '200px', height: '200px'}}
-            />
-        )}
+        <img
+            src="https://images.unsplash.com/photo-1516689948391-3379ec7c7df0?q=80&w=1974&h=450&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            alt="Article"
+            className="w-48 h-48 object-cover rounded mr-4"
+            style={{width: '200px', height: '200px'}}
+        />
         <div className="flex-1">
             <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center">
-                    <h3 className="text-xl font-semibold mr-2">{title}</h3>
+                    <h3 className="text-gray-900 text-xl font-semibold mr-2">{title}</h3>
                     {url && (
                         <a href={url} target="_blank" rel="noopener noreferrer"
                            className="text-blue-400 hover:text-gray-700">
@@ -217,13 +215,13 @@ const Newsletter = () => {
             <div className="bg-gray-100 p-4 rounded-lg mb-8">
                 <p className="text-gray-700">{jsonNL.summary_analysis}</p>
             </div>
-            <h2 className="text-2xl font-bold mt-8 mb-4">Metrics</h2>
-            <div className="metrics-section flex gap-4 mb-4">
+            <h2 className="text-2xl text-gray-900 font-bold mt-8 mb-4">Metrics</h2>
+            <div className="metrics-section flex gap-4 mb-4 flex-wrap">
                 {jsonNL!.metrics.map((metric) => (
                     <MetricCard key={metric.metric} {...metric} />
                 ))}
             </div>
-            <h2 className="text-2xl font-bold mb-4">Summary</h2>
+            <h2 className="text-2xl text-gray-900 font-bold mb-4">Summary</h2>
             <div className="summary-section mb-8">
                 {jsonNL.summary.map((summaryItem) => (
                     <SummaryCard key={summaryItem.title} {...summaryItem} />

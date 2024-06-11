@@ -41,7 +41,7 @@ const Txt = () => {
     }
 
     return (
-        <div>
+        <div className="w-screen h-screen relative bg-white-200 overflow-hidden">
             { updatable && 
             <div
                 onClick={onSubmit}
@@ -71,6 +71,7 @@ const Txt = () => {
             <textarea 
             className='w-screen h-screen text-black bg-white p-2'
             value={text} 
+            style={{ resize: 'none' }}
             onChange={(e) => {setText(e.target.value);setUpdatable(true);setUpdatableAgain(true)}}
             />
         </div>
