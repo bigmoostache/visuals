@@ -7,10 +7,7 @@ import {Suspense} from 'react';
 
 
 import {
-    ArticleInterface,
-    MetricInterface,
     NewsletterInterface,
-    SummaryItemInterface
 } from "@/app/(pages)/newsletter/interfaces";
 
 import SummaryCard from "@/app/(pages)/newsletter/components/summary";

@@ -4,6 +4,7 @@
 import PertinenceGauge from "@/app/(pages)/newsletter/components/pertinence-gauge";
 
 import {ArticleInterface} from "@/app/(pages)/newsletter/interfaces";
+import {FaLink} from "react-icons/fa";
 
 const ArticleCard: React.FC<ArticleInterface> = ({
                                                      reference_id,
@@ -20,14 +21,23 @@ const ArticleCard: React.FC<ArticleInterface> = ({
                                                      url
                                                  }) => (
     <div id={reference_id} className="flex bg-white shadow-md rounded-md mb-2 p-4">
-        {image && (
+        {
+            image?.substring(11) ? (
             <img
                 src={`data:image/jpeg;base64,${image.substring(11)}`}
                 alt="Article"
                 className="w-48 h-48 object-cover rounded mr-4"
                 style={{width: '200px', height: '200px'}}
             />
-        )}
+            ): image ? (
+                <img
+                    src="https://images.unsplash.com/photo-1516689948391-3379ec7c7df0?q=80&w=450&h=450&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    alt="Article"
+                    className="w-48 h-48 object-cover rounded mr-4"
+                    style={{width: '200px', height: '200px'}}
+                />
+            ):null
+        }
         <div className="flex-1">
             <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center">
@@ -35,11 +45,7 @@ const ArticleCard: React.FC<ArticleInterface> = ({
                     {url && (
                         <a href={url} target="_blank" rel="noopener noreferrer"
                            className="text-blue-400 hover:text-gray-700">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor" width="25" height="25">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                                      d="M10 13a5 5 0 1 0 7-7l-1.5 1.5a3 3 0 1 1-4 4l-1.5 1.5zM14 10a5 5 0 1 0-7 7l1.5-1.5a3 3 0 1 1 4-4l1.5-1.5z"/>
-                            </svg>
+                           <FaLink className="mr-2"></FaLink>
                         </a>
                     )}
                 </div>
