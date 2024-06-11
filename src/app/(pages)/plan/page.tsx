@@ -1,10 +1,15 @@
-import Image from "next/image";
+
 import Plan from "./Plan";
+import { PlanProvider } from '@/app/(pages)/plan/context/PlanContext';
 
 export default function Home() {
-  return (
-    <main className="w-full h-full">
-      <Plan/>
-    </main>
-  );
+
+    return (
+        <PlanProvider>
+            <main className="w-full h-full">
+                <Plan />
+            </main>
+        </PlanProvider>
+    );
 }
+

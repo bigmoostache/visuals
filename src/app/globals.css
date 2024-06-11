@@ -6,6 +6,10 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+
+  --primary: #28694B;
+  --secondary: #FF5F2D;
+  --tertiary: #F3F3EDFF
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,3 +35,18 @@ body {
     text-wrap: balance;
   }
 }
+
+
+
+/*
+"#FF5F2D", // Main color (orange)
+"#28694B", // Main color (green)
+"#FF8C5A", // Lighter orange
+"#74A57F", // Lighter green
+"#FFB384", // Soft orange
+"#3E9271", // Softer green
+"#FFDAAA", // Very light orange
+"#A3D4BC", // Very light green
+"#FFD6C1", // Pastel orange
+"#8BB6A9", // Pastel green
+*/

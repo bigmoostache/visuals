@@ -5,7 +5,7 @@ import usePatchFile from '../(hooks)/usePatchFile';
 import { useEffect, useState } from 'react'
 import { Suspense } from 'react'
 
-const Txt = () => {
+const Redaction = () => {
     // NO-CHANGE Retrieving URL
     const searchParams = useSearchParams()
     const url = searchParams.get('url')
@@ -41,50 +41,17 @@ const Txt = () => {
     }
 
     return (
-        <div className="w-screen h-screen relative bg-white-200 overflow-hidden">
-            { updatable && 
-            <div
-                onClick={onSubmit}
-                className='absolute top-2 right-4 px-2 py-1 bg-gray-200 text-gray-700 rounded-md cursor-pointer hover:bg-gray-400 transition-colors duration-300 ease-in-out text-sm'
-            >
-            {
-                updatableAgain && 'Update'
-            }
-            {
-                !updatableAgain && isLoading && 'Updating...'
-            }
-            {
-                !updatableAgain && !isLoading && isSuccess && 
-                <svg 
-
-                    xmlns="http://www.w3.org/2000/svg" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    strokeWidth={1.5} 
-                    stroke="currentColor" 
-                    className="size-5 text-green-600">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                </svg>
-            }
-            </div>
-            }
-            <textarea 
-            className='w-screen h-screen text-black bg-white p-2'
-            value={text} 
-            style={{ resize: 'none' }}
-            onChange={(e) => {setText(e.target.value);setUpdatable(true);setUpdatableAgain(true)}}
-            />
-        </div>
+        <h1>HELLO WORD</h1>
     );
 }
 
-const TxtPage = () => {
+const RedactionPage = () => {
     return (
       // You could have a loading skeleton as the `fallback` too
       <Suspense>
-        <Txt />
+        <Redaction />
       </Suspense>
     )
 }
 
-export default TxtPage;
+export default RedactionPage;
