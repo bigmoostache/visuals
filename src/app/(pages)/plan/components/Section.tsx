@@ -1,38 +1,28 @@
 // components/Section.tsx
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import Modal from 'react-modal';
-import { FaCaretDown, FaCaretUp } from 'react-icons/fa';
+import {FaCaretDown, FaCaretUp, FaEdit, FaTimes} from 'react-icons/fa';
 import FigureCard from "@/app/(pages)/plan/components/Figure";
 import ReferenceCard from "@/app/(pages)/plan/components/Reference";
-import { usePlan } from '@/app/(pages)/plan/context/PlanContext';
+import FeedbackComponent from "@/app/(pages)/plan/components/feedback";
 
-interface SectionCardProps extends Section {
+interface SectionCardProps {
+    section: Section;
     sources: Source[];
-    parentId: string;
+    parentId?: string;
     index: number;
 }
 
 const SectionCard: React.FC<SectionCardProps> = ({
-                                                     title,
-                                                     title_feedback,
-                                                     abstract,
-                                                     abstract_feedback,
-                                                     themes,
-                                                     themes_feedback,
-                                                     references,
-                                                     references_feedback,
-                                                     redaction_directives,
-                                                     full_text,
-                                                     figures,
-                                                     subsections_feedback,
-                                                     subsections,
                                                      sources,
                                                      parentId,
                                                      index,
+                                                     section
                                                  }) => {
+
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
-    const [feedback, setFeedback] = useState('');
+
     const [isFeedbackOpen, setIsFeedbackOpen] = useState({
         title: false,
         abstract: false,
@@ -40,8 +30,6 @@ const SectionCard: React.FC<SectionCardProps> = ({
         references: false,
         subsections: false,
     });
-
-    const { updateFeedback } = usePlan();
 
     const openModal = () => {
         setModalIsOpen(true);
@@ -56,91 +44,63 @@ const SectionCard: React.FC<SectionCardProps> = ({
     };
 
     const handleFeedbackToggle = (type: string) => {
-        setIsFeedbackOpen(prev => ({ ...prev, [type]: !prev[type] }));
+        // @ts-ignore
+        setIsFeedbackOpen(prev => ({...prev, [(type)]: !prev[type]}));
     };
 
-    const handleFeedbackChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setFeedback(e.target.value);
-    };
-
-    const handleFeedbackSubmit = (type: string) => {
-        // Handle feedback submission logic here
-        console.log(`Feedback for ${type}:`, feedback);
-        setFeedback('');
-        setIsFeedbackOpen(prev => ({ ...prev, [type]: false }));
-    };
-
-    const truncatedFullText = (full_text?.length || 0) > 500 ? `${full_text?.substring(0, 500)}...` : full_text;
-    const sectionId = parentId ? `${parentId}.${index + 1}` : `${index + 1}`;
+    const truncatedFullText = (section.full_text?.length || 0) > 500 ? `${section.full_text?.substring(0, 500)}...` : section.full_text;
+    const sectionId = parentId === undefined ? "" : parentId ? `${parentId}.${index + 1}` : `${index + 1}`;
 
     return (
-        <div className={`p-4 bg-white shadow-md rounded-md mb-4 w-full ${!parentId ? 'border border-tertiary' : 'border-l-4 border-secondary'}`}>
+        <div
+            className={`p-4 bg-white shadow-md rounded-md mb-4 w-full ${!parentId ? 'border border-tertiary' : 'border-l-4 border-secondary'}`}>
             <div className="flex justify-between items-center">
-                <h3 className={`text-xl font-semibold mb-2 ${!parentId ? 'text-primary' : 'text-primary'}`}>{sectionId} - {title}</h3>
+                <h3 className={`text-xl font-semibold mb-2 ${!parentId ? 'text-primary' : 'text-primary-500'}`}>
+                    {sectionId} {sectionId && ('-')} {section.title}
+                    {isOpen &&
+                        <FaEdit className="cursor-pointer inline ml-10" onClick={() => handleFeedbackToggle('title')}/>}
+                </h3>
+
                 <button onClick={toggleSection} className="text-primary">
-                    {isOpen ? <FaCaretUp size={20} /> : <FaCaretDown size={20} />}
+                    {isOpen ? <FaCaretUp size={20}/> : <FaCaretDown size={20}/>}
                 </button>
             </div>
             {isOpen && (
                 <>
-                    {abstract && <div className="mb-2">{abstract}</div>}
+                    <FeedbackComponent field="title" isOpen={isFeedbackOpen.title} object={section}
+                                       onToogleFeedback={handleFeedbackToggle}></FeedbackComponent>
+                    {section.abstract && <div className="mb-2">
+                        {section.abstract}
+                        <FaEdit className="cursor-pointer inline ml-5"
+                                onClick={() => handleFeedbackToggle('abstract')}/>
+                    </div>}
 
-                    <div className="mb-2">
-                        <strong>Title Feedback:</strong>
-                        {isFeedbackOpen.title ? (
-                            <div>
-                                <textarea
-                                    value={feedback}
-                                    onChange={handleFeedbackChange}
-                                    className="w-full p-2 border rounded-md"
-                                    placeholder="Enter your feedback here"
-                                />
-                                <button onClick={() => handleFeedbackSubmit('title')} className="mt-2 bg-primary text-white py-1 px-2 rounded-md">Save</button>
-                            </div>
-                        ) : (
-                            <button onClick={() => handleFeedbackToggle('title')} className="text-primary underline">Add Feedback</button>
-                        )}
-                    </div>
+                    <FeedbackComponent field="abstract" isOpen={isFeedbackOpen.abstract} object={section}
+                                       onToogleFeedback={handleFeedbackToggle}></FeedbackComponent>
 
-                    {abstract_feedback && (
-                        <div className="text-sm text-red-600 mb-2">Abstract Feedback: {abstract_feedback}</div>
-                    )}
-
-                    {themes.length > 0 && (
+                    {section.themes.length > 0 && (
                         <div className="mb-2">
-                            <strong>Themes:</strong>
-                            <ul className="ml-4 list-disc">
-                                {themes.map((theme, index) => (
+                            <strong>Themes: <FaEdit className="cursor-pointer inline ml-5"
+                                                    onClick={() => handleFeedbackToggle('themes')}/></strong>
+                            <ul className="ml-4 list-disc mb-2">
+                                {section.themes.map((theme, index) => (
                                     <li key={index}>{theme}</li>
                                 ))}
                             </ul>
-                            {isFeedbackOpen.themes ? (
-                                <div>
-                                    <textarea
-                                        value={feedback}
-                                        onChange={handleFeedbackChange}
-                                        className="w-full p-2 border rounded-md"
-                                        placeholder="Enter your feedback here"
-                                    />
-                                    <button onClick={() => handleFeedbackSubmit('themes')} className="mt-2 bg-primary text-white py-1 px-2 rounded-md">Save</button>
-                                </div>
-                            ) : (
-                                <button onClick={() => handleFeedbackToggle('themes')} className="text-primary underline">Add Feedback</button>
-                            )}
+                            <FeedbackComponent field="themes" isOpen={isFeedbackOpen.themes} object={section}
+                                               onToogleFeedback={handleFeedbackToggle}></FeedbackComponent>
                         </div>
                     )}
 
-                    {themes_feedback && (
-                        <div className="text-sm text-red-600 mb-2">Themes Feedback: {themes_feedback}</div>
-                    )}
+                    {section.redaction_directives &&
+                        <div className="mb-2"><strong>Redaction Directives:</strong> {section.redaction_directives}
+                        </div>}
 
-                    {redaction_directives && <div className="mb-2"><strong>Redaction Directives:</strong> {redaction_directives}</div>}
-
-                    {full_text && (
+                    {section.full_text && (
                         <div className="mb-4">
                             <strong>Full Text:</strong>
                             <p>{truncatedFullText}</p>
-                            {full_text.length > 500 && (
+                            {section.full_text.length > 500 && (
                                 <button onClick={openModal} className="text-primary underline">
                                     Read More
                                 </button>
@@ -155,74 +115,63 @@ const SectionCard: React.FC<SectionCardProps> = ({
                         className="fixed inset-0 flex items-center justify-center p-4 bg-gray-900 bg-opacity-75"
                         overlayClassName="fixed inset-0 bg-black bg-opacity-50"
                     >
-                        <div className="bg-white p-6 rounded-lg w-full max-w-2xl mx-auto">
-                            <button className="text-right mb-4" onClick={closeModal}>Close</button>
+                        <div className="bg-white p-6 rounded-lg w-full max-w-2xl mx-auto relative">
+                            <button className="absolute top-2 right-2 text-gray-600" onClick={closeModal}>
+                                <FaTimes size={20}/>
+                            </button>
                             <h4 className="text-xl font-semibold mb-2">Full Text</h4>
-                            <p>{full_text}</p>
+                            <p>{section.full_text}</p>
                         </div>
                     </Modal>
 
-                    {figures.length > 0 && (
+                    {section.figures.length > 0 && (
                         <div className="mb-4">
                             <strong>Figures:</strong>
                             <div className="flex flex-wrap">
-                                {figures.map(fig => <FigureCard key={fig.title} {...fig} updateFeedback={updateFeedback} />)}
+                                {section.figures.map(fig => <FigureCard key={fig.title} figure={fig}/>)}
                             </div>
                         </div>
                     )}
 
-                    {references.length > 0 && (
+                    {section.references.length > 0 && (
                         <div className="mb-4">
-                            <strong>References:</strong>
-                            {references.map(ref => (
-                                <ReferenceCard key={ref.source_id} reference={ref} sources={sources} />
+                            <strong>References: <FaEdit className="cursor-pointer inline ml-5"
+                                                        onClick={() => handleFeedbackToggle('references')}/></strong>
+                            <FeedbackComponent className="my-2" field="references" isOpen={isFeedbackOpen.references}
+                                               object={section}
+                                               onToogleFeedback={handleFeedbackToggle}></FeedbackComponent>
+
+                            {section.references.map((ref, i) => (
+                                <ReferenceCard key={ref.source_id.concat('_', i.toString())} reference={ref} sources={sources}/>
                             ))}
-                            {isFeedbackOpen.references ? (
-                                <div>
-                                    <textarea
-                                        value={feedback}
-                                        onChange={handleFeedbackChange}
-                                        className="w-full p-2 border rounded-md"
-                                        placeholder="Enter your feedback here"
-                                    />
-                                    <button onClick={() => handleFeedbackSubmit('references')} className="mt-2 bg-primary text-white py-1 px-2 rounded-md">Save</button>
-                                </div>
-                            ) : (
-                                <button onClick={() => handleFeedbackToggle('references')} className="text-primary underline">Add Feedback</button>
-                            )}
+
                         </div>
                     )}
 
-                    {references_feedback && (
-                        <div className="text-sm text-red-600 mb-2">References Feedback: {references_feedback}</div>
-                    )}
-
-                    {subsections_feedback && (
-                        <div className="text-sm text-red-600 mb-2">Subsections Feedback: {subsections_feedback}</div>
-                    )}
                 </>
             )}
-            {subsections.length > 0 && (
-                <div className="mt-4 ml-6 border-l-4 border-tertiary pl-4">
-                    <strong>Subsections:</strong>
-                    {subsections.map((sub, subIndex) => (
-                        <SectionCard key={sub.title} {...sub} sources={sources} parentId={sectionId} index={subIndex} />
-                    ))}
-                    {isFeedbackOpen.subsections ? (
-                        <div>
-                            <textarea
-                                value={feedback}
-                                onChange={handleFeedbackChange}
-                                className="w-full p-2 border rounded-md"
-                                placeholder="Enter your feedback here"
-                            />
-                            <button onClick={() => handleFeedbackSubmit('subsections')} className="mt-2 bg-primary text-white py-1 px-2 rounded-md">Save</button>
-                        </div>
-                    ) : (
-                        <button onClick={() => handleFeedbackToggle('subsections')} className="text-primary underline">Add Feedback</button>
-                    )}
-                </div>
-            )}
+
+            <div className="mt-4 ml-6 border-l-4 border-tertiary pl-4">
+                {isOpen && (
+                    <>
+                        <strong>
+                            Subsections: {!section.subsections.length && ("(none)")}
+                            <FaEdit className="cursor-pointer inline ml-5"
+                                    onClick={() => handleFeedbackToggle('subsections')}/>
+                        </strong>
+
+                        <FeedbackComponent className="my-2" field="subsections" isOpen={isFeedbackOpen.subsections}
+                                           object={section} onToogleFeedback={handleFeedbackToggle}></FeedbackComponent>
+                    </>
+
+                )}
+                {section.subsections.map((sub, subIndex) => (
+                    <SectionCard key={sub.title} section={sub} sources={sources} parentId={sectionId}
+                                 index={subIndex}/>
+                ))}
+
+            </div>
+
         </div>
     );
 };
