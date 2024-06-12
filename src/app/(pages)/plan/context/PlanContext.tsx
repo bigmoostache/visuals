@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import {useSearchParams} from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import useGetFile from '@/app/(pages)/(hooks)/useGetFile';
 import usePatchFile from '@/app/(pages)/(hooks)/usePatchFile';
 
@@ -9,21 +9,22 @@ interface PlanContextType {
     setPlan: React.Dispatch<React.SetStateAction<PlanInterface | undefined>>;
     updateFeedback: () => void;
     isLoading: boolean;
+    isUpdating: boolean;
 }
 
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
 
-export const PlanProvider: React.FC<{ children: ReactNode }> = ({ children}) => {
+export const PlanProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // NO-CHANGE Retrieving URL
-    const searchParams = useSearchParams()
-    const url = searchParams.get('url')
-    if(!url){throw "DATA URL NOT PROVIDED"}
+    const searchParams = useSearchParams();
+    const url = searchParams.get('url');
+    if (!url) { throw "DATA URL NOT PROVIDED"; }
+
     const [plan, setPlan] = useState<PlanInterface>();
-    const [updatable, setUpdatable] = useState<boolean>(false);
-    const [updatableAgain, setUpdatableAgain] = useState<boolean>(false);
+    const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
     // NO-CHANGE Retrieving BLOB
-    const { data } = useGetFile({ fetchUrl: url });
+    const { data, isLoading } = useGetFile({ fetchUrl: url });
 
     useEffect(() => {
         if (!data) return;
@@ -33,24 +34,25 @@ export const PlanProvider: React.FC<{ children: ReactNode }> = ({ children}) => 
         };
         reader.readAsText(data);
     }, [data]);
-// Local conversion local type -> blob
+
     const convertBackToFile = (text: string) => {
-        const blob = new Blob([text], {type: 'text/plain'});
+        const blob = new Blob([text], { type: 'text/plain' });
         return new File([blob], 'filename.txt', { lastModified: Date.now(), type: blob.type });
-    }
-    // NO-CHANGE Updating BLOB imports
-    const { mutate, isLoading, isSuccess } = usePatchFile(
-        {fetchUrl: url as string}
-    );
-    const updateFeedback = () => {
-        //setUpdatableAgain(false);
-        //mutate(convertBackToFile(JSON.stringify(plan)));
     };
 
-    
+    // NO-CHANGE Updating BLOB imports
+    const { mutate, isLoading: isMutating, isSuccess } = usePatchFile({ fetchUrl: url as string });
+
+    useEffect(() => {
+        setIsUpdating(isMutating);
+    }, [isMutating]);
+
+    const updateFeedback = () => {
+        mutate(convertBackToFile(JSON.stringify(plan)));
+    };
 
     return (
-        <PlanContext.Provider value={{ plan, setPlan, updateFeedback, isLoading }}>
+        <PlanContext.Provider value={{ plan, setPlan, updateFeedback, isLoading, isUpdating }}>
             {children}
         </PlanContext.Provider>
     );

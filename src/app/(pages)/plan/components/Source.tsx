@@ -15,9 +15,11 @@ const SourceCard: React.FC<Source> = ({ id, title, citation, figures, full_text 
     };
 
     return (
-        <div id={`source-${id}`} className="p-4 border-2 border-secondary rounded-md mb-4 cursor-pointer" onClick={openModal}>
-            <h3 className="text-xl font-semibold mb-2 text-primary">{title}</h3>
-            <p>{citation}</p>
+        <div id={`source-${id}`} >
+            <div onClick={openModal} className="p-4 border-2 border-secondary rounded-md mb-4 cursor-pointer">
+                <h3 className="text-xl font-semibold mb-2 text-primary">{title}</h3>
+                <p>{citation}</p>
+            </div>
 
             <Modal
                 isOpen={modalIsOpen}
@@ -33,9 +35,11 @@ const SourceCard: React.FC<Source> = ({ id, title, citation, figures, full_text 
                     <h4 className="text-xl font-semibold mb-2">{title}</h4>
                     <div className="mb-4">
                         <strong>Figures:</strong>
+
                         <div className="flex flex-wrap">
-                            {figures.map(fig => <FigureCard key={fig.title} figure={fig} />)}
+                            {figures.map(fig => <FigureCard key={fig.title} figure={fig}/>)}
                         </div>
+
                     </div>
                     <div className="mb-4">
                         <strong>Full Text:</strong>

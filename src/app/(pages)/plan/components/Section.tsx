@@ -9,7 +9,7 @@ import FeedbackComponent from "@/app/(pages)/plan/components/feedback";
 interface SectionCardProps {
     section: Section;
     sources: Source[];
-    parentId: string | undefined;
+    parentId?: string;
     index: number;
 }
 
@@ -44,6 +44,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
     };
 
     const handleFeedbackToggle = (type: string) => {
+        // @ts-ignore
         setIsFeedbackOpen(prev => ({...prev, [(type)]: !prev[type]}));
     };
 
@@ -141,7 +142,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
                                                onToogleFeedback={handleFeedbackToggle}></FeedbackComponent>
 
                             {section.references.map((ref, i) => (
-                                <ReferenceCard key={ref.source_id.concat('_', i)} reference={ref} sources={sources}/>
+                                <ReferenceCard key={ref.source_id.concat('_', i.toString())} reference={ref} sources={sources}/>
                             ))}
 
                         </div>
