@@ -1,0 +1,80 @@
+{
+  "dev_url": "http://localhost:3000/biblio?url=http%3A%2F%2Flocalhost%3A3000%2Fexamples%2Fexample1.biblio.jsonl",
+
+  "DOI": "10.3389/fnins.2021.744743",
+  "abstract": "co-expression networks and <mark class=\"highlighted\">prenatal</mark> adversity conditions on cognitive <mark class=\"highlighted\">development</mark> trajectories and gray matter",
+  "title": "Cognitive Development and Brain Gray Matter Susceptibility to Prenatal Adversities: Moderation by the Prefrontal Cortex Brain-Derived Neurotrophic Factor Gene Co-expression Network",
+  "author": [
+    {
+      "affiliation": [],
+      "full": "Euclides Jos\u00e9 de Mendon\u00e7a Filho",
+      "first": true
+    },
+    {
+      "affiliation": [],
+      "full": "Barbara Barth",
+      "first": false
+    },
+    {
+      "affiliation": [],
+      "full": "Denise Ruschel Bandeira",
+      "first": false
+    },
+    {
+      "affiliation": [],
+      "full": "Randriely Merscher Sobreira de Lima",
+      "first": false
+    },
+    {
+      "affiliation": [],
+      "full": "Danusa Mar Arcego",
+      "first": false
+    },
+    {
+      "affiliation": [],
+      "full": "Carla Dalmaz",
+      "first": false
+    },
+    {
+      "affiliation": [],
+      "full": "Irina Pokhvisneva",
+      "first": false
+    },
+    {
+      "affiliation": [],
+      "full": "Roberto Britto Sassi",
+      "first": false
+    },
+    {
+      "affiliation": [],
+      "full": "Geoffrey B. C. Hall",
+      "first": false
+    },
+    {
+      "affiliation": [],
+      "full": "Michael J. Meaney",
+      "first": false
+    },
+    {
+      "affiliation": [],
+      "full": "Patricia Pelufo Silveira",
+      "first": false
+    }
+  ],
+  "publication_date": "2021-11-23",
+  "SCORE": 3,
+  "SCORE_JUSTIFICATION": "The article title and abstract focus on cognitive development and prenatal adversities, but not specifically on cannabis exposure.",
+  "TYPE_JUSTIFICATION": "The abstract pertains to the impact of prenatal adversities on cognitive development and brain gray matter, moderated by genetic factors. It seems to be a longitudinal study analyzing developmental trajectories.",
+  "TYPE": "Longitudinal Study",
+  "METHODS": "The study likely uses neuroimaging techniques and genetic analysis to assess brain gray matter and cognitive development in relation to prenatal adversities.",
+  "KEY_POINTS": [
+    "Cognitive development trajectories",
+    "Influence of prenatal adversities",
+    "Role of prefrontal cortex",
+    "Genetic moderation by brain-derived neurotrophic factor"
+  ],
+  "BKT_JUSTIFICATION": "The study provides insights into how genetic factors can moderate the impact of prenatal adversities on cognitive and brain development. It adds a nuanced understanding but does not represent a groundbreaking change in the field.",
+  "BKT": "Incremental Advance",
+  "INCLUDE_SCORE": 4,
+  "INCLUDE_JUSTIFICATION": "While the study is relevant to prenatal influences on brain development, it does not focus on the specific effects of cannabis exposure."
+}
