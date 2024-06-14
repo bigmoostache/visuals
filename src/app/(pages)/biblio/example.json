@@ -1,80 +1,134 @@
-{
-  "dev_url": "http://localhost:3000/biblio?url=http%3A%2F%2Flocalhost%3A3000%2Fexamples%2Fexample1.biblio.jsonl",
-
-  "DOI": "10.3389/fnins.2021.744743",
-  "abstract": "co-expression networks and <mark class=\"highlighted\">prenatal</mark> adversity conditions on cognitive <mark class=\"highlighted\">development</mark> trajectories and gray matter",
-  "title": "Cognitive Development and Brain Gray Matter Susceptibility to Prenatal Adversities: Moderation by the Prefrontal Cortex Brain-Derived Neurotrophic Factor Gene Co-expression Network",
-  "author": [
-    {
-      "affiliation": [],
-      "full": "Euclides Jos\u00e9 de Mendon\u00e7a Filho",
-      "first": true
-    },
-    {
-      "affiliation": [],
-      "full": "Barbara Barth",
-      "first": false
-    },
-    {
-      "affiliation": [],
-      "full": "Denise Ruschel Bandeira",
-      "first": false
-    },
-    {
-      "affiliation": [],
-      "full": "Randriely Merscher Sobreira de Lima",
-      "first": false
-    },
-    {
-      "affiliation": [],
-      "full": "Danusa Mar Arcego",
-      "first": false
-    },
-    {
-      "affiliation": [],
-      "full": "Carla Dalmaz",
-      "first": false
-    },
-    {
-      "affiliation": [],
-      "full": "Irina Pokhvisneva",
-      "first": false
-    },
-    {
-      "affiliation": [],
-      "full": "Roberto Britto Sassi",
-      "first": false
-    },
-    {
-      "affiliation": [],
-      "full": "Geoffrey B. C. Hall",
-      "first": false
-    },
-    {
-      "affiliation": [],
-      "full": "Michael J. Meaney",
-      "first": false
-    },
-    {
-      "affiliation": [],
-      "full": "Patricia Pelufo Silveira",
-      "first": false
-    }
-  ],
-  "publication_date": "2021-11-23",
-  "SCORE": 3,
-  "SCORE_JUSTIFICATION": "The article title and abstract focus on cognitive development and prenatal adversities, but not specifically on cannabis exposure.",
-  "TYPE_JUSTIFICATION": "The abstract pertains to the impact of prenatal adversities on cognitive development and brain gray matter, moderated by genetic factors. It seems to be a longitudinal study analyzing developmental trajectories.",
-  "TYPE": "Longitudinal Study",
-  "METHODS": "The study likely uses neuroimaging techniques and genetic analysis to assess brain gray matter and cognitive development in relation to prenatal adversities.",
-  "KEY_POINTS": [
-    "Cognitive development trajectories",
-    "Influence of prenatal adversities",
-    "Role of prefrontal cortex",
-    "Genetic moderation by brain-derived neurotrophic factor"
-  ],
-  "BKT_JUSTIFICATION": "The study provides insights into how genetic factors can moderate the impact of prenatal adversities on cognitive and brain development. It adds a nuanced understanding but does not represent a groundbreaking change in the field.",
-  "BKT": "Incremental Advance",
-  "INCLUDE_SCORE": 4,
-  "INCLUDE_JUSTIFICATION": "While the study is relevant to prenatal influences on brain development, it does not focus on the specific effects of cannabis exposure."
-}
+[
+  {
+    "dev_url": "http://localhost:3000/biblio?url=http%3A%2F%2Flocalhost%3A3000%2Fexamples%2Fexample1.biblio.jsonl",
+    "DOI": "10.3389/fnins.2021.744743",
+    "abstract": "co-expression networks and <mark class=\"highlighted\">prenatal</mark> adversity conditions on cognitive <mark class=\"highlighted\">development</mark> trajectories and gray matter",
+    "title": "Cognitive Development and Brain Gray Matter Susceptibility to Prenatal Adversities: Moderation by the Prefrontal Cortex Brain-Derived Neurotrophic Factor Gene Co-expression Network",
+    "author": [
+      {
+        "affiliation": [],
+        "full": "Euclides Jos\u00e9 de Mendon\u00e7a Filho",
+        "first": true
+      },
+      {
+        "affiliation": [],
+        "full": "Barbara Barth",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Denise Ruschel Bandeira",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Randriely Merscher Sobreira de Lima",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Danusa Mar Arcego",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Carla Dalmaz",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Irina Pokhvisneva",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Roberto Britto Sassi",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Geoffrey B. C. Hall",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Michael J. Meaney",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Patricia Pelufo Silveira",
+        "first": false
+      }
+    ],
+    "publication_date": "2021-11-23",
+    "SCORE": 3,
+    "SCORE_JUSTIFICATION": "The article title and abstract focus on cognitive development and prenatal adversities, but not specifically on cannabis exposure.",
+    "TYPE_JUSTIFICATION": "The abstract pertains to the impact of prenatal adversities on cognitive development and brain gray matter, moderated by genetic factors. It seems to be a longitudinal study analyzing developmental trajectories.",
+    "TYPE": "Longitudinal Study",
+    "METHODS": "The study likely uses neuroimaging techniques and genetic analysis to assess brain gray matter and cognitive development in relation to prenatal adversities.",
+    "KEY_POINTS": [
+      "Cognitive development trajectories",
+      "Influence of prenatal adversities",
+      "Role of prefrontal cortex",
+      "Genetic moderation by brain-derived neurotrophic factor"
+    ],
+    "BKT_JUSTIFICATION": "The study provides insights into how genetic factors can moderate the impact of prenatal adversities on cognitive and brain development. It adds a nuanced understanding but does not represent a groundbreaking change in the field.",
+    "BKT": "Incremental Advance",
+    "INCLUDE_SCORE": 4,
+    "INCLUDE_JUSTIFICATION": "While the study is relevant to prenatal influences on brain development, it does not focus on the specific effects of cannabis exposure."
+  },
+  {
+    "DOI": "10.1016/j.psychres.2024.115820",
+    "abstract": "Abstract\n--------\n\n### Aim\n\nSubstance use disorders are increasingly prevalent among pregnant individuals, with evident risks of adverse perinatal outcomes. This study examines substance use (tobacco, alcohol and marijuana) among pregnant individuals with mental illness.\n\n### Methods\n\nA national representative sample of pregnant individuals were derived from 2012 to 2021 National Survey of Drug Use and Health data. Associations of past-year mental illness with past-month polysubstance use and each substance use were analyzed by logistic regression models, with complex sampling weights and survey year.\n\n### Results\n\nAmong 6801 pregnant individuals, 16.4% reported having any mental illness (AMI) in 2012 and 2013, increasing to 23.8% in 2020\u20132021; and SMI increased from 3.3% to 9.4%. Polysubstance use increased disproportionately among those with severe mental illness (SMI), from 14.0% to 18.6%. Pregnant individuals with greater severity of mental illness had higher odds of polysubstance use (Adjusted Odds Ratio, 95% CI: AMI but no SMI vs. without AMI: 1.59 \\[1.04, 2.44\\]; SMI vs. without AMI: 5.48 \\[2.77, 10.82\\]).\n\n### Conclusions\n\nPregnant individuals with greater severity of mental illness were more likely to engage in substance use. Evidence-based educational, screening and treatment services, and public policy changes are warranted to mitigate the harmful health outcomes of substance use among US pregnant individuals with mental illness.",
+    "title": "Co-occurrence of mental illness and substance use among US pregnant individuals, 2012-2021",
+    "author": [
+      {
+        "affiliation": [],
+        "full": "Zhong Li",
+        "first": true
+      },
+      {
+        "affiliation": [],
+        "full": "Curisa M. Tucker",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Cassie L. Odahowski",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Kacey Y Eichelberger",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Jiajia Zhang",
+        "first": false
+      },
+      {
+        "affiliation": [],
+        "full": "Peiyin Hung",
+        "first": false
+      }
+    ],
+    "publication_date": "2024-04-01",
+    "SCORE": 9,
+    "SCORE_JUSTIFICATION": "The article extensively examines substance use among pregnant individuals, relevant to the study topic.",
+    "TYPE_JUSTIFICATION": "This is a longitudinal study analyzing data from a national survey over multiple years. It looks at prevalence and associations over time.",
+    "TYPE": "Longitudinal Study",
+    "METHODS": "The study used data from the National Survey of Drug Use and Health from 2012 to 2021 and employed logistic regression models with complex sampling weights and survey year for analysis.",
+    "KEY_POINTS": [
+      "Increase in substance use disorders among pregnant individuals from 2012 to 2021.",
+      "Higher rates of substance use in individuals with severe mental illness.",
+      "Greater severity of mental illness correlates with increased odds of polysubstance use.",
+      "Calls for educational, screening and treatment services, and public policy changes."
+    ],
+    "BKT_JUSTIFICATION": "This study represents a significant development as it highlights increasing trends and associations over a substantial period, providing valuable insights for policy and healthcare. However, it is not a groundbreaking finding but adds important evidence to an ongoing issue.",
+    "BKT": "Significant Development",
+    "INCLUDE_SCORE": 8,
+    "INCLUDE_JUSTIFICATION": "This article is highly relevant for understanding the co-occurrence of mental illness and substance use among pregnant individuals, making it valuable for your study."
+  }
+]
