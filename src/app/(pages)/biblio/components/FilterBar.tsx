@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import FilterElement from './FilterElement';
 import FilterAuthorElement from "@/app/(pages)/biblio/components/FilterAuthorElement";
+import { Article } from '@/app/(pages)/biblio/interfaces';
 
 interface FilterBarProps {
     articles: Article[];
     filteredArticles: Article[];
     onFilterChange: (filters: { [key: string]: number | string | null }) => void;
+    onSort: (fieldId: string, order: 'asc' | 'desc') => void;
+    sortState: { fieldId: string, order: 'asc' | 'desc' } | null;
 }
 
 const filtersToMake = [
@@ -15,7 +18,7 @@ const filtersToMake = [
     { field: 'TYPE', displayName: 'Type of article' },
 ];
 
-const FilterBar: React.FC<FilterBarProps> = ({ articles, filteredArticles, onFilterChange }) => {
+const FilterBar: React.FC<FilterBarProps> = ({ articles, filteredArticles, onFilterChange, onSort, sortState }) => {
     const [filters, setFilters] = useState<{ [key: string]: number | string | null }>({});
     const [articlesSelected, setArticlesSelected] = useState<number>(articles.filter(a => !!a.DO_INCLUDE).length);
 
@@ -23,18 +26,6 @@ const FilterBar: React.FC<FilterBarProps> = ({ articles, filteredArticles, onFil
         const newFilters = { ...filters, [fieldId]: value };
         setFilters(newFilters);
         onFilterChange(newFilters);
-    };
-
-    const handleSort = (fieldId: string, order: 'asc' | 'desc') => {
-        const sortedArticles = [...filteredArticles].sort((a, b) => {
-            if (typeof a[fieldId] === 'number' && typeof b[fieldId] === 'number') {
-                return order === 'asc' ? a[fieldId] - b[fieldId] : b[fieldId] - a[fieldId];
-            } else if (typeof a[fieldId] === 'string' && typeof b[fieldId] === 'string') {
-                return order === 'asc' ? a[fieldId].localeCompare(b[fieldId]) : b[fieldId].localeCompare(a[fieldId]);
-            }
-            return 0;
-        });
-        onFilterChange(sortedArticles);
     };
 
     useEffect(() => {
@@ -51,7 +42,8 @@ const FilterBar: React.FC<FilterBarProps> = ({ articles, filteredArticles, onFil
                         displayName={filter.displayName}
                         articles={articles}
                         onChange={handleFilterChange}
-                        onSort={handleSort}
+                        onSort={onSort}
+                        sortOrder={sortState?.fieldId === filter.field ? sortState.order : undefined}
                     />
                 ))}
                 <FilterAuthorElement

@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {FaSortUp, FaSortDown} from 'react-icons/fa';
+import React, { useEffect, useState } from 'react';
+import { FaSortUp, FaSortDown } from 'react-icons/fa';
 
 interface FilterElementProps {
     fieldId: string;
@@ -7,15 +7,16 @@ interface FilterElementProps {
     articles: Article[];
     onChange: (fieldId: string, value: number | string | null) => void;
     onSort: (fieldId: string, order: 'asc' | 'desc') => void;
+    sortOrder: 'asc' | 'desc' | undefined;
 }
 
-const FilterElement: React.FC<FilterElementProps> = ({fieldId, displayName, articles, onChange, onSort}) => {
+const FilterElement: React.FC<FilterElementProps> = ({ fieldId, displayName, articles, onChange, onSort, sortOrder }) => {
     const [values, setValues] = useState<{ value: number | string; text: string }[]>([]);
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc' |undefined>();
 
     useEffect(() => {
+        // @ts-ignore
         const uniqueValues = Array.from(new Set(articles.map(article => article[fieldId]))).filter(value => value !== undefined && value !== null);
-        const valueOptions = uniqueValues.map(value => ({value, text: value.toString()})).sort((a, b) => {
+        const valueOptions = uniqueValues.map(value => ({ value, text: value.toString() })).sort((a, b) => {
             if (typeof a.value === 'number') {
                 return a.value - b.value;
             } else if (typeof a.value === 'string') {
@@ -33,8 +34,8 @@ const FilterElement: React.FC<FilterElementProps> = ({fieldId, displayName, arti
     };
 
     const handleSort = () => {
-        const newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-        setSortOrder(newSortOrder);
+
+        const newSortOrder = sortOrder === undefined || sortOrder === 'asc' ? 'desc' : 'asc';
         onSort(fieldId, newSortOrder);
     };
 
@@ -47,10 +48,9 @@ const FilterElement: React.FC<FilterElementProps> = ({fieldId, displayName, arti
                     {displayName}
                 </label>
                 <div className='inline relative cursor-pointer' onClick={handleSort}>
-                    <FaSortUp className={`mb-[-10px] ${sortOrder === 'asc' ? 'text-secondary' : 'text-primary'}`}/>
-                    <FaSortDown className={`mt-[-10px] ${sortOrder === 'desc' ? 'text-secondary' : 'text-primary'}`}/>
+                    <FaSortUp className={`mb-[-10px] ${sortOrder === 'asc' ? 'text-secondary' : 'text-primary'}`} />
+                    <FaSortDown className={`mt-[-10px] ${sortOrder === 'desc' ? 'text-secondary' : 'text-primary'}`} />
                 </div>
-
             </div>
             <select
                 id={fieldId}

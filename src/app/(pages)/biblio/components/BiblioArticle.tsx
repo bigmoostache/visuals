@@ -63,15 +63,27 @@ const BiblioArticle: React.FC<ArticleCardProps> = ({ article, isIncluded, onIncl
                 </div>
             )}
             <div className="mt-2">
-                <p>
-                    <strong>SCORE:</strong> {article.SCORE}
-                    <button
-                        onClick={() => setShowScoreJustification(!showScoreJustification)}
-                        className="ml-2 text-secondary hover:underline"
-                    >
-                        {showScoreJustification ? 'Hide Justification' : 'Show Justification'}
-                    </button>
-                </p>
+                <div className="flex justify-between">
+                    <div className="inline">
+                        <strong>TOPIC SCORE:</strong> {article.SCORE}
+                        <button
+                            onClick={() => setShowScoreJustification(!showScoreJustification)}
+                            className="ml-2 text-secondary hover:underline"
+                        >
+                            {showScoreJustification ? 'Hide Justification' : 'Show Justification'}
+                        </button>
+                    </div>
+                    <div  className="inline">
+                        <strong>INCLUDE SCORE:</strong> {article.INCLUDE_SCORE}
+                        <button
+                            onClick={() => setShowScoreJustification(!showScoreJustification)}
+                            className="ml-2 text-secondary hover:underline"
+                        >
+                            {showScoreJustification ? 'Hide Justification' : 'Show Justification'}
+                        </button>
+                    </div>
+                </div>
+
                 {showScoreJustification && (
                     <p className="mt-2 text-gray-700">{article.SCORE_JUSTIFICATION}</p>
                 )}
