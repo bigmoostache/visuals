@@ -58,3 +58,45 @@ body {
 "#8BB6A9", // Pastel green
 */
 
+.index{
+  @apply text-secondary text-sm p-5 bg-tertiary underline;
+}
+.index a {
+  @apply block;
+}
+.index-H2 {
+  margin-left: 20px;
+  margin-top:10px;
+}
+.index-H3 {
+  margin-left: 40px;
+
+}
+
+.redaction{
+  @apply text-justify p-10;
+}
+
+.redaction H1 {
+  @apply text-5xl text-center block mt-16 mb-24
+}
+
+.redaction H2 {
+  @apply text-3xl  text-secondary text-left;
+  margin-top: 50px;
+  margin-bottom: 20px;
+}
+
+
+.redaction H3 {
+  @apply text-xl  text-secondary text-left;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+.redaction p {
+  margin-bottom: 10px;
+}
+
+.bibliography a {
+  @apply text-primary underline;
+}

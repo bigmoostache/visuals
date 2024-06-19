@@ -17,7 +17,7 @@ Therefore, you may corrupt the file. This is why we provided you with an endpoin
 [Here](https://github.com/bigmoostache/visuals) is a `React` boilerplate for a lightweight Web Application whose purpose is to **receive, visualize, manipulate and update** the distant files.
 
 In the boilerplate, the path of interest will be `src/app/(pages)/txt`
-You may start by copy pasting that folder, rename it to `src/app/(pages)/plan`, rename `Txt.tsx` to `Plan.tsx`, and then code your UI in there.
+You may start by copy pasting that folder, rename it to `src/app/(pages)/plan`, rename `Markdown.tsx` to `Plan.tsx`, and then code your UI in there.
 
 To use the boilerplate:
 - Install the latest version of `node`
