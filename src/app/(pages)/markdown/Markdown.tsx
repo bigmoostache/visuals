@@ -8,6 +8,11 @@ import showdown from 'showdown';
 
 const converter = new showdown.Converter()
 
+/*
+* Convert 2 pdf:
+* https://github.com/eKoopmans/html2pdf.js
+* https://parall.ax/products/jspdf
+* */
 
 const Markdown = () => {
     // NO-CHANGE Retrieving URL
