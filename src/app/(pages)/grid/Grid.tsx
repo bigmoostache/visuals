@@ -4,8 +4,8 @@ import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
 import { useEffect, useState } from 'react'
 import { Suspense } from 'react'
-import DataTable  from './components/Table'
-// import DataEvaluationTable from './components/Table2'
+// import DataTable  from './components/Table'
+import Table3 from './components/Table3'
 
 const Grid = () => {
     // NO-CHANGE Retrieving URL
@@ -36,7 +36,7 @@ const Grid = () => {
     return (
         <div className="w-screen h-screen relative bg-white-200 overflow-hidden">
             {/* Hello World */}
-        <DataTable />
+        <Table3 />
 
         </div>
     );
