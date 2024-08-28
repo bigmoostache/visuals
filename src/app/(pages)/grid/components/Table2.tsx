@@ -1,6 +1,6 @@
 import React from 'react';
 
-const DataEvaluationTable = () => {
+const Table2 = () => {
   const data = [
     {
       dataset: 'Kazley-2018',
@@ -106,4 +106,4 @@ const DataEvaluationTable = () => {
   );
 };
 
-export default DataEvaluationTable;
+export default Table2;

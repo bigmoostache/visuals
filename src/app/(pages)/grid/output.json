@@ -1,10 +1,4 @@
 {
-  "url": "https://pipelines.blends.fr/dev/?file_name=ebf3fa41-e46e-4d1f-8977-ded962b33caa_2024-08-20 20:56:57.568963.grid&dataset_id=1618&file_access_token=65e6af6a-2830-4866-9a5a-75f46179fdf3_2024-08-20 20:56:57.568919",
-  "quoted_url": "https%3A//pipelines.blends.fr/dev/%3Ffile_name%3Debf3fa41-e46e-4d1f-8977-ded962b33caa_2024-08-20%2020%3A56%3A57.568963.grid%26dataset_id%3D1618%26file_access_token%3D65e6af6a-2830-4866-9a5a-75f46179fdf3_2024-08-20%2020%3A56%3A57.568919",
-  "example": "https://simplevisuals.blends.fr/grid?url=https%3A//pipelines.blends.fr/dev/%3Ffile_name%3Debf3fa41-e46e-4d1f-8977-ded962b33caa_2024-08-20%2020%3A56%3A57.568963.grid%26dataset_id%3D1618%26file_access_token%3D65e6af6a-2830-4866-9a5a-75f46179fdf3_2024-08-20%2020%3A56%3A57.568919"
-}
-
-{
   "rows": [
     {
       "name": "Relevance",

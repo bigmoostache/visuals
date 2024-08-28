@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const DataTable = () => {
+export const Table1 = () => {
   const data = {
     rows: [
       {
@@ -144,4 +144,4 @@ export const DataTable = () => {
   );
 };
 
-export default DataTable;
+export default Table1;
