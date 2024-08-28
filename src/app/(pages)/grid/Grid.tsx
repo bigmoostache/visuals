@@ -15,7 +15,7 @@ const Grid = () => {
           return (
             <>
               <div>
-                <h1>This is Table4</h1>
+                {/* <h1>This is Table4</h1> */}
                 <Table4 jsonData={data.rows} /> {/* Pass data.rows to Table4 */}
               </div>
             </>
