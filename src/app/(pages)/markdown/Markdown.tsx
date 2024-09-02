@@ -5,6 +5,7 @@ import usePatchFile from '../(hooks)/usePatchFile';
 import {useEffect, useState} from 'react'
 import {Suspense} from 'react'
 import showdown from 'showdown';
+import SettingsIcon from "@/app/utils/project-manager/SettingsIcon";
 
 const converter = new showdown.Converter()
 
@@ -27,13 +28,7 @@ const Markdown = () => {
     const [updatableAgain, setUpdatableAgain] = useState<boolean>(false);
     // Local conversion blob -> local type
     useEffect(() => {
-        if (!data) return;
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            setText(e.target?.result as string);
-
-        }
-        reader.readAsText(data);
+        loadText(data)
     }, [data]);
 
     useEffect(() => {
@@ -60,6 +55,17 @@ const Markdown = () => {
 
         setHtml(redac.concat(references))
     }, [text]);
+
+
+    const loadText = (data:any)=>{
+        if (!data) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            setText(e.target?.result as string);
+
+        }
+        reader.readAsText(data);
+    }
 
     // Local conversion local type -> blob
     const convertBackToFile = (text: string) => {
@@ -119,7 +125,19 @@ const Markdown = () => {
         return {redac, references}
 
     }
+
+    const handleProjectSelect = (project: any) => {
+        console.log("Projet sélectionné:", project.project_id);        
+        
+      };
+
+    const handleFileUpload = (file:File)=>{
+       loadText(file)        
+    }
+
     return (
+        <>
+        <SettingsIcon onProjectSelect={handleProjectSelect} onFileUploaded={handleFileUpload}/>
         <div className="redaction max-w-[60rem] mx-auto p-4 bg-white ml-">
             <div className="mx-36">
                 <img alt="Blends Logo" src="https://blends.fr/blends-logo.svg"/>
@@ -130,13 +148,18 @@ const Markdown = () => {
                 }/>
             }
         </div>
+        </>
     );
+
+    
+   
+
 }
 
 const MarkdownPage = () => {
     return (
         // You could have a loading skeleton as the `fallback` too
-        <Suspense>
+        <Suspense>            
             <Markdown/>
         </Suspense>
     )

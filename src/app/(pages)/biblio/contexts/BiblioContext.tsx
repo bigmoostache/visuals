@@ -3,6 +3,7 @@ import React, {createContext, ReactNode, useContext, useEffect, useState} from '
 import { Article } from '@/app/(pages)/biblio/interfaces';
 import {useSearchParams} from "next/navigation";
 import useGetFile from "@/app/(pages)/(hooks)/useGetFile";
+import { changeHasPdf } from '@/app/utils/data-api/DataApi';
 
 interface BiblioContextProps {
     biblio: Article[];
@@ -16,6 +17,8 @@ interface BiblioContextProps {
     handleFilterChange: (newFilters: { [key: string]: number | string | null }) => void;
     handleSort: (fieldId: string, order: 'asc' | 'desc') => void;
     handleIncludeChange: (DOI: string) => void;
+    handleHasPdfChange:(DOI:string)=>void,
+    handleUpdateBiblio:(articles:any[])=>void
 }
 
 const BiblioContext = createContext<BiblioContextProps | undefined>(undefined);
@@ -32,8 +35,8 @@ export const BiblioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const reader = new FileReader();
         reader.onload = function (e) {
             const strBib = e.target?.result as string;
-            const theBiblio = strBib.split('\n').map(s => JSON.parse(s));
-            setBiblio(theBiblio);
+            const theBiblio = strBib.split('\n').map(s => JSON.parse(s)).map(a=>Object.assign(a,{YEAR:new Date(a.publication_date).getFullYear()}));
+            setBiblio(theBiblio);            
         };
         reader.readAsText(data);
     }, [data]);
@@ -56,8 +59,8 @@ export const BiblioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     filteredArticles = filteredArticles.filter(article => article.author?.find((author:Author) => author.full === filterValue));
                 }
             } else {
-                if (filterValue !== null && filterValue !== undefined) {
-                    filteredArticles = filteredArticles.filter(article => article[key] === filterValue);
+                if (filterValue !== null && filterValue !== undefined) {                    
+                    filteredArticles = filteredArticles.filter(article => article[key] == filterValue);
                 }
             }
         });
@@ -80,18 +83,19 @@ export const BiblioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [filters, biblio, sortState]);
 
     const handleFilterChange = (newFilters: { [key: string]: number | string | null }) => {
-        console.log('handleFilterChange', newFilters);
+        
         setFilters(newFilters);
     };
 
     const handleSort = (fieldId: string, order: 'asc' | 'desc') => {
-        console.log('handleSort', { fieldId, order });
+        
         setSortState({ fieldId, order });
     };
 
     const handleIncludeChange = (DOI: string) => {
+        
         const updatedBiblio = biblio.map(article => {
-            if (article.DOI === DOI) {
+            if ((article.DOI||article.doi) === DOI) {
                 return { ...article, DO_INCLUDE: !article.DO_INCLUDE };
             }
             return article;
@@ -99,6 +103,35 @@ export const BiblioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         setBiblio(updatedBiblio);
     };
+
+    const handleHasPdfChange = (DOI:string)=>{
+        const updatedBiblio = biblio.map(article => {
+            if ((article.DOI||article.doi) === DOI) {                
+                changeHasPdf(article.DOI||article.doi,!article.hasPdf).then()                
+                
+                return { ...article, hasPdf: !article.hasPdf };
+            }           
+            return article;
+        });
+
+        setBiblio(updatedBiblio);
+    }
+
+    const handleUpdateBiblio = (articles:any[]) => {
+        const dois = articles.map(a=>a.doi)
+        const hasPdf = articles.filter(a=>a!==false).map(a=>a.doi)
+        const updatedBiblio = biblio.map(article => {
+            if (dois.indexOf(article.DOI||article.doi)>=0) {
+                article = { ...article, DO_INCLUDE: !article.DO_INCLUDE };
+            }
+            if (hasPdf.indexOf(article.DOI||article.doi)>=0) {
+                article = { ...article, hasPdf: !article.hasPdf };
+            }
+            return article;
+        });
+
+        setBiblio(updatedBiblio);
+    }
 
     return (
         <BiblioContext.Provider
@@ -114,6 +147,8 @@ export const BiblioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 handleFilterChange,
                 handleSort,
                 handleIncludeChange,
+                handleHasPdfChange,
+                handleUpdateBiblio
             }}
         >
             {children}

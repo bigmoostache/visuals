@@ -7,10 +7,11 @@ import {FaLink} from "react-icons/fa";
 interface ArticleCardProps {
     article: Article;
     isIncluded: boolean;
-    onIncludeChange: (DOI: string) => void;
+    onIncludeChange: (DOI: string) => void;    
+    onToggleHasPdf: (DOI: string) => void;    
 }
 
-const BiblioArticle: React.FC<ArticleCardProps> = ({article, isIncluded, onIncludeChange}) => {
+const BiblioArticle: React.FC<ArticleCardProps> = ({article, onIncludeChange, onToggleHasPdf}) => {
     const [showDetails, setShowDetails] = useState(false);
     const [showFullAbstract, setShowFullAbstract] = useState(false);
     const [tooltip, setTooltip] = useState('');
@@ -21,19 +22,26 @@ const BiblioArticle: React.FC<ArticleCardProps> = ({article, isIncluded, onInclu
     const showTooltip = (field?: string) => {
         setTooltip(field ? article[field] : '')
     }
+   
+
     return (
-        <div className="w-full max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden mb-4 p-6 bg-tertiary">
+        <div className={`w-full max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden mb-4 p-6 bg-tertiary ${article.hasPdf? 'border-primary border-l-8':''}`}>
             <div className="flex items-center  mb-2">
                 <div className="w-[30px] flex-shrink-0 mr-2 text-xl text-secondary-800">
-                    {isIncluded ? (
-                        <FaCircleCheck onClick={() => onIncludeChange(article.DOI)}/>
+                    {(article.DO_INCLUDE) ? (
+                        <FaCircleCheck onClick={() => onIncludeChange(article.DOI||article.doi)}/>
                     ) : (
-                        <FaRegCircle onClick={() => onIncludeChange(article.DOI)}/>
+                        <FaRegCircle onClick={() => onIncludeChange(article.DOI||article.doi)}/>
                     )}
                 </div>
                 <h2 className="text-xl font-bold text-primary flex-1">{article.title}</h2>
                 <div className="w-[30px] flex-shrink-0 mr-2 text-xl text-primary cursor-pointer">
-                    <a href={`https://doi.org/${article.DOI}`} target="_blank"><FaLink></FaLink></a>
+                    <a href={`https://doi.org/${article.DOI||article.doi}`} target="_blank"><FaLink></FaLink></a>
+                    {article.hasPdf ? (
+                        <FaCircleCheck className='mt-2' onClick={()=>onToggleHasPdf(article.DOI||article.doi)}/>
+                    ) : (
+                        <FaRegCircle  className='mt-2' onClick={()=>onToggleHasPdf(article.DOI||article.doi)}/>
+                    )}
                 </div>
             </div>
             <p className="text-gray-700 mb-2">
@@ -55,7 +63,7 @@ const BiblioArticle: React.FC<ArticleCardProps> = ({article, isIncluded, onInclu
             </button>
             {showDetails && (
                 <div className="mt-2 text-primary">
-                    <p><strong>DOI:</strong> {article.DOI}</p>
+                    <p><strong>DOI:</strong> {article.DOI||article.doi}</p>
                     <p><strong>Authors:</strong> {article.author?.map((a: Author) => a.full).join(', ')}</p>
                     <p><strong>Publication Date:</strong> {article.publication_date}</p>
                     <p><strong>Type:</strong> {article.TYPE} ({article.TYPE_JUSTIFICATION})</p>

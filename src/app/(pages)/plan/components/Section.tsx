@@ -4,7 +4,7 @@ import Modal from 'react-modal';
 import {FaCaretDown, FaCaretUp, FaEdit, FaTimes} from 'react-icons/fa';
 import FigureCard from "@/app/(pages)/plan/components/Figure";
 import ReferenceCard from "@/app/(pages)/plan/components/Reference";
-import FeedbackComponent from "@/app/(pages)/plan/components/feedback";
+import FeedbackComponent from "@/app/(pages)/plan/components/Feedback";
 
 interface SectionCardProps {
     section: Section;

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import Modal from 'react-modal';
 import { FaEdit, FaSave, FaTimes } from 'react-icons/fa';
-import FeedbackComponent from "@/app/(pages)/plan/components/feedback";
+import FeedbackComponent from "@/app/(pages)/plan/components/Feedback";
+
 
 interface FigureCardProps {
     figure:Figure

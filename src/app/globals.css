@@ -60,6 +60,7 @@ body {
 
 .index{
   @apply text-secondary text-sm p-5 bg-tertiary underline;
+  page-break-before: always;
 }
 .index a {
   @apply block;
@@ -78,13 +79,15 @@ body {
 }
 
 .redaction H1 {
-  @apply text-5xl text-center block mt-16 mb-24
+  @apply text-5xl text-center block mt-16 mb-24;
+  
 }
 
 .redaction H2 {
   @apply text-3xl  text-secondary text-left;
   margin-top: 50px;
   margin-bottom: 20px;
+  page-break-before: always;
 }
 
 
@@ -99,4 +102,10 @@ body {
 
 .bibliography a {
   @apply text-primary underline;
+}
+
+@media print {
+  .no-print {
+    display: none;
+  }
 }

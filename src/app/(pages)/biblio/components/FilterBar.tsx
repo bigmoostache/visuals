@@ -2,12 +2,16 @@ import React, { useEffect, useState } from 'react';
 import FilterElement from './FilterElement';
 import FilterAuthorElement from "@/app/(pages)/biblio/components/FilterAuthorElement";
 import { useBiblio } from '@/app/(pages)/biblio/contexts/BiblioContext';
+import SearchByDoiElement from './SearchByDoi';
 
 const filtersToMake = [
-    { field: 'SCORE', displayName: 'Article Score' },
-    { field: 'INCLUDE_SCORE', displayName: 'Include Score' },
+    { field: 'SCORE', displayName: 'Article Score', type:'number' },
+    { field: 'INCLUDE_SCORE', displayName: 'Include Score' , type:'number'},
+    { field: 'YEAR', displayName: 'Year', type:'number' },
+    { field: 'DO_INCLUDE', displayName: 'Is Included', type:'boolean' },
     { field: 'BKT', displayName: 'Breakthrough' },
     { field: 'TYPE', displayName: 'Type of article' },
+   
 ];
 
 const FilterBar = () => {
@@ -20,7 +24,7 @@ const FilterBar = () => {
         setFilters(newFilters);
         handleFilterChange(newFilters);
     };
-
+ 
     useEffect(() => {
         setArticlesSelected(biblio.filter(a => !!a.DO_INCLUDE).length);
     }, [biblio]);
@@ -31,6 +35,7 @@ const FilterBar = () => {
                 {filtersToMake.map(filter => (
                     <FilterElement
                         key={filter.field}
+                        type={filter.type}
                         fieldId={filter.field}
                         displayName={filter.displayName}
                         articles={biblio}
@@ -42,6 +47,9 @@ const FilterBar = () => {
                 <FilterAuthorElement
                     key={'Author-Filter'}
                     articles={biblio}
+                    onChange={handleFilterChangeWrapper}
+                />
+                <SearchByDoiElement
                     onChange={handleFilterChangeWrapper}
                 />
             </div>
