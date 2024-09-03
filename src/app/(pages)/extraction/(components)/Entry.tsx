@@ -93,7 +93,7 @@ export default function Entry({data, onDeleteClick, setDocHasBeenModified}: {dat
                 {Object.values(ValueType).map((type) => (
                     <span 
                         key={type}
-                        className={`relative inline bg-gray-200 rounded-full px-2 py-1 mx-1 w-fit cursor-pointer ${valueType === type ? 'bg-blue-400 text-white' : ''}`}
+                        className={`relative inline bg-gray-200 rounded-full px-2 py-1 mx-1 w-fit cursor-pointer ${valueType === type ? 'bg-blue-300 text-white' : ''}`}
                         onClick={() => onValueTypeClick(type as ValueType)}
                     >
                         {type.toUpperCase()}

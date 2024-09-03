@@ -106,7 +106,7 @@ export default function Component(
       </div>}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">        
         {entries.map((entry, index) => (
-          <Entry key={index} data={entry} onDeleteClick={() => onDeleteEntry(index)} setDocHasBeenModified={setDocHasBeenModified}/>
+          <Entry key={entry.name + index} data={entry} onDeleteClick={() => onDeleteEntry(index)} setDocHasBeenModified={setDocHasBeenModified}/>
         ))}
         <div
           className="text-sm rounded p-2 flex flex-col bg-blue-50 hover:bg-blue-100 cursor-pointer items-center justify-center"
