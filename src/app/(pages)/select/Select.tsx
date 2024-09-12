@@ -154,7 +154,7 @@ const SelectC = () => {
                 className='w-full shadow-xl mt-1 bg-green-50 border-green-200 border-2'
                 onClick={() => {
                     const new_rows =  [...rows, {
-                        exclusion_criteria_description: '',
+                        inclusion_criteria_description: '',
                         name: 'INCLUSION_'
                     }]
                     setRows(new_rows);
