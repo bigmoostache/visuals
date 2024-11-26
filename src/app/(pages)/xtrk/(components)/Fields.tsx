@@ -152,17 +152,18 @@ export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange
     const options = Object.keys(TypePublicNames);
     return (
         <Card className='mx-2 mt-4 relative'>
-            <div className='absolute top-1 right-1'>
+            <div className='absolute bottom-1 right-1'>
                 <Button 
                     variant={'ghost'}
                     id = 'delete'
+                    className={`hover:bg-gradient-to-r hover:from-red-100 hover:to-red-300  hover:ring-2 hover:ring-red-700 hover:ring-offset-2`}
                     onClick={() => {
                         if (confirmDelete) {
                             onDelete();
                         }
                         setConfirmDelete(!confirmDelete);
                     }}>
-                    {confirmDelete ? 'Confirm' : <X />}
+                    {confirmDelete ? 'Confirm' : 'Delete'}
                 </Button>
             </div>
             <CardHeader>

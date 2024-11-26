@@ -1,77 +1,21 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Suspense } from 'react';
 import { FieldEl, Fields } from './(components)/Fields';
 import { json } from 'stream/consumers';
+import { useSearchParams } from 'next/navigation';
+import useGetFile from '../(hooks)/useGetFile';
+import usePatchFile from '../(hooks)/usePatchFile';
+import { Save } from 'lucide-react';
 
 interface DataStructure {
     fields: Fields[];
 }
-const actorsModel: DataStructure = {
-    fields: [
-        {
-            object_name: "name",
-            object_description: "The name of the actor",
-            object_required: true,
-            object_type: {
-                string_maxLength: 100
-            }
-        },
-        {
-            object_name: "date_of_birth",
-            object_description: "The date of birth of the actor",
-            object_required: true,
-            object_type: {
-                date_format: 'AAAA-MM-JJ'
-            }
-        },
-        {
-            object_name: "country_of_birth",
-            object_description: "The country where the actor was born",
-            object_required: true,
-            object_type: {
-                string_maxLength: 100
-            }
-        },
-        {
-            object_name: "gender",
-            object_description: "The gender of the actor",
-            object_required: true,
-            object_type: {
-                enumeration_choices: ["male", "female"]
-            }
-        },
-        {
-            object_name: "list_of_movies",
-            object_description: "A list of movies the actor has appeared in",
-            object_required: false,
-            object_type: [
-                {
-                    object_name: "title",
-                    object_description: "The title of the movie",
-                    object_required: true,
-                    object_type: {
-                        string_maxLength: 100
-                    }
-                },
-                {
-                    object_name: "year",
-                    object_description: "The year the movie was released",
-                    object_required: true,
-                    object_type: {
-                        integer_minimum: 1900,
-                        integer_maximum: 2022
-                    }
-                }
-            ] // List of subfields or just strings (could be expanded based on need)
-        }
-    ]
-};
-
 const Page = () => {
     // NO-CHANGE Retrieving URL
-    /* const searchParams = useSearchParams()
+    const searchParams = useSearchParams()
     const url = searchParams.get('url')
+    const {mutate, isLoading, isSuccess} = usePatchFile({ fetchUrl: url as string });
     // NO-CHANGE Retrieving BLOB
     const { data } = useGetFile({fetchUrl: url as string})
     // parse the json
@@ -83,10 +27,31 @@ const Page = () => {
             setJsonNL(JSON.parse(e.target?.result as string) as DataStructure);
         }
         reader.readAsText(data);
-    }, [data]); */
-    const [jsonNL, setJsonNL] = useState<DataStructure>(actorsModel);
+    }, [data]);
+    // Save the file
+    const convertToBlob = (data: DataStructure) => {
+        const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+        return new File([blob], 'filename.grid', {lastModified: Date.now(), type: blob.type});
+    }
+    const saveFile = () => {
+        mutate(convertToBlob(jsonNL as DataStructure));
+    }
+    // ctrl + s to save
+    useEffect(() => {
+        const handleSave = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveFile();
+            }
+        }
+        window.addEventListener('keydown', handleSave);
+        return () => window.removeEventListener('keydown', handleSave);
+    }, [jsonNL]);
     return (
         <div>
+            <div className="flex justify-end p-4 cursor-pointer" onClick={saveFile}>
+                {isLoading ? 'Saving' : <Save/>}
+            </div>
             {jsonNL && (
                 jsonNL.fields.map((field, index) => (
                     <FieldEl
