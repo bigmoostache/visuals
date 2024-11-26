@@ -5,7 +5,7 @@ import { Entry as _Entry, ValueMultiplicity} from '../Extraction';
 import { Camera, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { ValueType } from '../Extraction';
+import { ValueType, getValueTypeLabels } from '../Extraction';
 
 export default function Entry({data, onDeleteClick, setDocHasBeenModified}: {data: _Entry, onDeleteClick: () => void, setDocHasBeenModified: (value: boolean) => void}) {
     console.log(data)
@@ -96,7 +96,7 @@ export default function Entry({data, onDeleteClick, setDocHasBeenModified}: {dat
                         className={`relative inline bg-gray-200 rounded-full px-2 py-1 mx-1 w-fit cursor-pointer ${valueType === type ? 'border border-gray-700' : ''}`}
                         onClick={() => onValueTypeClick(type as ValueType)}
                     >
-                        {type.toUpperCase()}
+                        {getValueTypeLabels(type as ValueType)}
                     </span>
                 ))}
             </div>

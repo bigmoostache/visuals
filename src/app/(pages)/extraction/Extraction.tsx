@@ -16,6 +16,23 @@ export enum ValueType {
     DURATION = 'duration'
 }
 
+export const getValueTypeLabels = (value : ValueType) => {
+    switch(value) {
+        case ValueType.STR:
+            return 'Text';
+        case ValueType.INT:
+            return 'Count';
+        case ValueType.FLOAT:
+            return 'Number';
+        case ValueType.BOOLEAN:
+            return 'True/False';
+        case ValueType.DATE:
+            return 'Date';
+        case ValueType.DURATION:
+            return 'Duration';
+    }
+}
+
 export const ValueTypeToType = {
     "str": String,
     "int": Number,
