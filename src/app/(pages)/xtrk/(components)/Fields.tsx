@@ -14,6 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { Boolean, BooleanEl } from './Boolean';
+import { DataStructure, DataStructureEl } from './DataStructure';
 
 function rep(s: string) {
     return s
@@ -27,12 +29,12 @@ export interface Fields {
     object_name: string;
     object_description: string;
     object_required: boolean;
-    object_type: boolean | Integer | Number | String | Enumeration | Date | Fields[];
+    object_type: Boolean | Integer | Number | String | Enumeration | Date | DataStructure;
 }
 
 export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange: (updatedFields: Fields) => void, onDelete: () => void }) => {
     const inferType = (object_type: any) => {
-        if (typeof object_type === 'boolean') {
+        if ('boolean' in object_type) {
             return 'Boolean';
         } else if (object_type instanceof Array) {
             return 'Fields';
@@ -63,26 +65,27 @@ export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange
             // else, we initialize the new field with the default value of the new type
             switch (newType) {
                 case 'Boolean':
-                    onChange({ ...field, object_type: false });
+                    onChange({ ...field, object_type: { boolean : 'boolean'} });
                     break;
                 case 'Number':
-                    onChange({ ...field, object_type: { number_minimum: null, number_maximum: null, number_unit: null } });
+                    onChange({ ...field, object_type: { _float: 'float', number_minimum: null, number_maximum: null, number_unit: null } });
                     break;
                 case 'String':
-                    onChange({ ...field, object_type: { string_maxLength: null } });
+                    onChange({ ...field, object_type: { string: 'string', string_maxLength: null } });
                     break;
                 case 'Enumeration':
-                    onChange({ ...field, object_type: { enumeration_choices: [] } });
+                    onChange({ ...field, object_type: { enum: 'enum', enumeration_choices: [] } });
                     break;
                 case 'Date':
-                    onChange({ ...field, object_type: { date_format: 'AAAA-MM-JJ' } });
+                    onChange({ ...field, object_type: { date: 'date', date_format: 'AAAA-MM-JJ' } });
                     break;
                 case 'Integer':
-                    onChange({ ...field, object_type: { integer_minimum: null, integer_maximum: null } });
+                    onChange({ ...field, object_type: { integer: 'integer', integer_minimum: null, integer_maximum: null } });
                     break;
                 case 'Fields':
-                    onChange({ ...field, object_type: [] });
-                    break;
+                    onChange({ ...field, object_type: { object_list: 'object_list', fields: [
+                        { object_name: '', object_description: '', object_required: false, object_type: { string: 'string', string_maxLength: null } }
+                    ] } });
             }
         }
         setRecomputeHook(!recomputeHook);
@@ -90,39 +93,24 @@ export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange
 
     const Details = (
     ) => {
-        const field_is_array = field.object_type instanceof Array; 
-        const field_is_boolean = typeof field.object_type === 'boolean';
         return (
             <>
-            {!field_is_boolean && !field_is_array && 'integer_minimum' in (field.object_type as any) && <IntegerEl integer={field.object_type as Integer} onChange={(updated) => onChange({ ...field, object_type: updated })} />}
-            {!field_is_boolean && !field_is_array && 'number_minimum' in (field.object_type as any) && <NumberEl number={field.object_type as Number} onChange={(updated) => onChange({ ...field, object_type: updated })} />}
-            {!field_is_boolean && !field_is_array && 'string_maxLength' in (field.object_type as any) && <StringEl string={field.object_type as String} onChange={(updated) => onChange({ ...field, object_type: updated })} />}
-            {!field_is_boolean && !field_is_array && 'enumeration_choices' in (field.object_type as any) && <EnumerationEl enumeration={field.object_type as Enumeration} onChange={(updated) => onChange({ ...field, object_type: updated })} />}
-            {!field_is_boolean && !field_is_array && 'date_format' in (field.object_type as any) && <DateEl date={field.object_type as Date} onChange={(updated) => onChange({ ...field, object_type: updated })} />}
-            {!field_is_boolean && field_is_array && (
-                <div>
-                    {(field.object_type as unknown as Fields[]).map((f, i) => (
-                        <FieldEl
-                            key={i}
-                            field={f}
-                            onDelete={() => { const updatedFields = field.object_type as Fields[]; updatedFields.splice(i, 1); onChange({ ...field, object_type: updatedFields }); }}
-                            onChange={(updated) => {
-                                const updatedFields = field.object_type as Fields[]; 
-                                updatedFields[i] = updated;
-                                onChange({ ...field, object_type: updatedFields });
-                            }}
-                        />
-                    ))}
-                    <Button
-                    className='ml-2 mt-3'
-                        onClick={() => {
-                            onChange({ ...field, object_type: [...(field.object_type as Fields[]), { object_name: '', object_description: '', object_required: false, object_type: false }] });
-                        }}
-                        >
-                        Add Column
-                    </Button>
-                </div>
-            )}
+            {'boolean' in (field.object_type as any) && <BooleanEl />}
+            {'integer' in (field.object_type as any) && <IntegerEl integer={field.object_type as Integer} onChange={(updated) => onChange({ ...field, object_type: updated })} />}
+            {'_float' in (field.object_type as any) && <NumberEl number={field.object_type as Number} onChange={(updated) => onChange({ ...field, object_type: updated })} />}
+            {'string' in (field.object_type as any) && <StringEl string={field.object_type as String} onChange={(updated) => onChange({ ...field, object_type: updated })} />}
+            {'enum' in (field.object_type as any) && <EnumerationEl enumeration={field.object_type as Enumeration} onChange={(updated) => onChange({ ...field, object_type: updated })} />}
+            {'date' in (field.object_type as any) && <DateEl date={field.object_type as Date} onChange={(updated) => onChange({ ...field, object_type: updated })} />}
+            {'object_list' in (field.object_type as any) && 
+                <DataStructureEl 
+                    onAddField={() => {
+                        if ('fields' in field.object_type) {
+                            onChange({ ...field, object_type: { ...field.object_type, fields: [...field.object_type.fields, { object_name: '', object_description: '', object_required: false, object_type: { string: 'string', string_maxLength: null } }] } });
+                        }
+                    }}
+                    data_structure={field.object_type as DataStructure} 
+                    onChange={(updated) => onChange({ ...field, object_type: updated })} 
+            />}
             </>
         )
     }
@@ -151,7 +139,7 @@ export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange
     }, {} as { [key: string]: string });
     const options = Object.keys(TypePublicNames);
     return (
-        <Card className='mx-2 mt-4 relative'>
+        <Card className='relative h-full rounded-2xl'>
             <div className='absolute bottom-1 right-1'>
                 <Button 
                     variant={'ghost'}
@@ -170,7 +158,7 @@ export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange
                 <CardTitle>
                     <input
                         placeholder='Field Name'
-                        className='w-full sm:w-1/2 md:w-1/4 lg:w-1/5 xl:w-1/6 text-lg font-bold'
+                        className='w-full text-lg font-bold'
                         value={field.object_name}
                         onChange={(e) => onChange({ ...field, object_name: rep(e.target.value) })}
                     />
@@ -178,7 +166,7 @@ export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange
                 <CardDescription>
                     <input
                         placeholder='Field Description'
-                        className='w-full sm:w-1/2 md:w-1/4 lg:w-1/5 xl:w-1/6 text-md font-semibold'
+                        className='w-full text-md font-semibold'
                         value={field.object_description}
                         onChange={(e) => onChange({ ...field, object_description: e.target.value })}
                     />
@@ -201,7 +189,7 @@ export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange
                             onChange={(option: string | null) => { if (option) handleTypeChange(TypePublicNames[option]) }}
                         />
                     </div>
-                    <div className='mt-2 ml-8'>{Details()}</div>
+                    <div className='mt-1'>{Details()}</div>
                     
                 </div>
             </CardContent>

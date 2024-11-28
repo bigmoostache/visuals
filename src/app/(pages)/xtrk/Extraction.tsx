@@ -7,10 +7,8 @@ import { useSearchParams } from 'next/navigation';
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
 import { Save } from 'lucide-react';
+import { DataStructure, DataStructureEl } from './(components)/DataStructure';
 
-interface DataStructure {
-    fields: Fields[];
-}
 const Page = () => {
     // NO-CHANGE Retrieving URL
     const searchParams = useSearchParams()
@@ -53,18 +51,14 @@ const Page = () => {
                 {isLoading ? 'Saving' : <Save/>}
             </div>
             {jsonNL && (
-                jsonNL.fields.map((field, index) => (
-                    <FieldEl
-                        key={index}
-                        field={field}
-                        onDelete={() => { const newFields = [...jsonNL.fields]; newFields.splice(index, 1); setJsonNL({ fields: newFields }); }}
-                        onChange={(updatedFields: Fields) => {
-                            const newFields = [...jsonNL.fields];
-                            newFields[index] = updatedFields;
-                            setJsonNL({ fields: newFields });
-                        }}
-                    />
-                ))
+                <DataStructureEl
+                className='p-2 pt-0'
+                    data_structure={jsonNL}
+                    onChange={setJsonNL}
+                    onAddField={() => {
+                        setJsonNL({...jsonNL, fields: [...jsonNL.fields, {object_name: '', object_description: '', object_required: true, object_type: {string: 'string', string_maxLength : null}}]});
+                    }}
+                />
             )}
         </div>
     );

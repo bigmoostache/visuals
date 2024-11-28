@@ -3,6 +3,7 @@
 import { Label } from '@radix-ui/react-label';
 import React, { useState } from 'react';
 export interface Integer {
+    integer : 'integer';
     integer_minimum?: number | null;
     integer_maximum?: number | null;
     integer_unit?: string | null;

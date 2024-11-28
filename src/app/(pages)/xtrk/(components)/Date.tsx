@@ -4,12 +4,13 @@ import React, { useState } from 'react';
 
 
 export interface Date {
+    date : 'date';
     date_format: 'AAAA-MM-JJTHH:MM:SS,ss-/+FF:ff' | 'AAAA-MM-JJ' | 'AAAA-MM-JJ';
 }
 
 export const DateEl = ({ date, onChange }: { date: Date, onChange: (updated: Date) => void }) => {
     const handleChange = (value: Date['date_format']) => {
-        onChange({ date_format: value });
+        onChange({ date: date.date, date_format: value });
     };
     return (
         <div>

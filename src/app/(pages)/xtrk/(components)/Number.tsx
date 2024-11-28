@@ -4,6 +4,7 @@ import { Label } from '@radix-ui/react-label';
 import React, { useState } from 'react';
 
 export interface Number {
+    _float : 'float';
     number_minimum?: number | null;
     number_maximum?: number | null;
     number_unit?: string | null;

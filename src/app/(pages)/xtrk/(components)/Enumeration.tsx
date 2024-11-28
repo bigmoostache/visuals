@@ -4,6 +4,7 @@ import { Plus, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 export interface Enumeration {
+    enum : 'enum';
     enumeration_choices: string[];
 }
 
@@ -11,13 +12,13 @@ export const EnumerationEl = ({ enumeration, onChange }: { enumeration: Enumerat
     const handleAddChoice = () => {
         const newChoice = prompt("Enter a new choice:", "");
         if (newChoice) {
-            onChange({ enumeration_choices: [...enumeration.enumeration_choices, newChoice] });
+            onChange({ enum: enumeration.enum, enumeration_choices: [...enumeration.enumeration_choices, newChoice] });
         }
     };
 
     const handleRemoveChoice = (index: number) => {
         const updatedChoices = enumeration.enumeration_choices.filter((_, i) => i !== index);
-        onChange({ enumeration_choices: updatedChoices });
+        onChange({ enum: enumeration.enum, enumeration_choices: updatedChoices });
     };
     const [confirmDelete, setConfirmDelete] = useState<string>('');
     useEffect(() => {

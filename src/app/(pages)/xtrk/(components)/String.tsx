@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 
 export interface String {
+    string : 'string';
     string_maxLength?: number | null;
 }
 export const StringEl = ({ string, onChange }: { string: String, onChange: (updated: String) => void }) => {
     const handleChange = (value: number | null) => {
-        onChange({ string_maxLength: value });
+        onChange({ string: 'string', string_maxLength: value });
     };
     return (
         <div>
