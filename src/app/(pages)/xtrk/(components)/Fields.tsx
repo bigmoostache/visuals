@@ -36,7 +36,7 @@ export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange
     const inferType = (object_type: any) => {
         if ('boolean' in object_type) {
             return 'Boolean';
-        } else if (object_type instanceof Array) {
+        } else if ('object_list' in object_type) {
             return 'Fields';
         } else if ('number_minimum' in object_type) {
             return 'Number';
