@@ -1,10 +1,10 @@
 # Node.js
 node_modules/
 .next
-.next/
+.next
 .git
-.idea/
-.vscode/
+.idea
+.vscode
 .DS_Store
 __pycache__/
 *.pyc
@@ -176,3 +176,4 @@ bower_components/
 *.war
 *.ear
 *.swp
+node_modules

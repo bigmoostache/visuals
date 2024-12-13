@@ -5,30 +5,18 @@ import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Save } from 'lucide-react';
 
-// Simple color pickers
-const colors = ["#000000", "#FF0000", "#00FF00", "#0000FF", "#FFFF00","#00FFFF","#FF00FF","#FFFFFF","#C0C0C0","#808080"];
-const bgColors = ["#FFFFFF", "#EEE8AA","#FFD700","#ADFF2F","#7FFFD4","#87CEEB","#DDA0DD","#FFC0CB","#F5F5DC","#C0C0C0"];
+// Removed imports for Input, Switch, Textarea, Card, Label as not needed now
+// (We keep Button for saving and a simple checkbox for 'Use first row')
 
-// Font sizes
-const fontSizes = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32];
-
-// This component will:
-// - Load xlsx from the server
-// - Display sheets in a table
-// - Provide a toolbar for styling (bold, italic, underline, font size, text color, cell bg color)
-// - Allow selecting a sheet from a bottom menu
-// - On ctrl+s or Save button, re-upload the modified XLSX
-
-interface CellPosition {
-  r: number;
-  c: number;
+// Utility to convert number to Excel-like column name: 0 -> A, 1 -> B, ...
+function columnName(n: number) {
+  let str = "";
+  while(n >= 0) {
+    str = String.fromCharCode((n % 26) + 65) + str;
+    n = Math.floor(n / 26) - 1;
+  }
+  return str;
 }
 
 export default function XLSXPage() {
@@ -41,15 +29,23 @@ export default function XLSXPage() {
   const [sheetNames, setSheetNames] = useState<string[]>([]);
   const [currentSheet, setCurrentSheet] = useState<string>('');
   const [sheetData, setSheetData] = useState<(string|number)[][]>([]);
-  const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null);
+  const [selectedCell, setSelectedCell] = useState<{r: number; c: number} | null>(null);
 
-  // Styling states
-  const [bold, setBold] = useState(false);
-  const [italic, setItalic] = useState(false);
-  const [underline, setUnderline] = useState(false);
-  const [fontSize, setFontSize] = useState<number|undefined>(undefined);
-  const [fontColor, setFontColor] = useState<string|undefined>(undefined);
-  const [fillColor, setFillColor] = useState<string|undefined>(undefined);
+  // Removed styling states (bold, italic, underline, fontSize, fontColor, fillColor)
+  // Removed any references to applyStyles
+
+  // For resizing
+  const [colWidths, setColWidths] = useState<number[]>([]);
+  const [rowHeights, setRowHeights] = useState<number[]>([]);
+
+  // By default, checked
+  const [useFirstRowAsHeader, setUseFirstRowAsHeader] = useState(true);
+
+  const tableRef = useRef<HTMLDivElement>(null);
+  const resizingColRef = useRef<{index: number; startX: number; startWidth: number} | null>(null);
+  const resizingRowRef = useRef<{index: number; startY: number; startHeight: number} | null>(null);
+
+  const rowHeaderWidth = 50; // Fixed width for row header
 
   useEffect(() => {
     if (!data) return;
@@ -81,98 +77,35 @@ export default function XLSXPage() {
       rows.push(row);
     }
     setSheetData(rows);
+
+    const defaultColWidth = 100;
+    const defaultRowHeight = 24;
+    const newColWidths = new Array((rows[0]||[]).length).fill(defaultColWidth);
+    const newRowHeights = new Array(rows.length).fill(defaultRowHeight);
+    setColWidths(newColWidths);
+    setRowHeights(newRowHeights);
   }
 
   useEffect(() => {
     loadCurrentSheet();
   }, [workbook, currentSheet]);
 
-  // Handle cell selection
+  useEffect(() => {
+    // After the data is loaded and rendered, adjust row heights according to the rendered table cells
+    requestAnimationFrame(() => {
+      if (!tableRef.current) return;
+      const rows = tableRef.current.querySelectorAll('tbody tr');
+      const newRowHeights = Array.from(rows).map((rowEl) => {
+        const rect = (rowEl as HTMLTableRowElement).getBoundingClientRect();
+        return rect.height || 24;
+      });
+      setRowHeights(newRowHeights);
+    });
+  }, [sheetData, useFirstRowAsHeader]);
+
   const handleCellClick = (r: number, c: number) => {
     setSelectedCell({r, c});
-    // Load current style from the cell
-    if (workbook && currentSheet) {
-      const ws = workbook.Sheets[currentSheet];
-      const cell_addr = XLSX.utils.encode_cell({r,c});
-      const cell = ws[cell_addr];
-      if (cell && cell.s && cell.s.font) {
-        setBold(!!cell.s.font.bold);
-        setItalic(!!cell.s.font.italic);
-        setUnderline(!!cell.s.font.underline);
-        setFontSize(cell.s.font.sz);
-        setFontColor(cell.s.font.color?.rgb ? "#" + cell.s.font.color.rgb.slice(2) : undefined);
-      } else {
-        setBold(false);
-        setItalic(false);
-        setUnderline(false);
-        setFontSize(undefined);
-        setFontColor(undefined);
-      }
-      if (cell && cell.s && cell.s.fill && cell.s.fill.fgColor) {
-        const fg = cell.s.fill.fgColor.rgb;
-        if (fg) {
-          setFillColor("#"+fg.slice(2));
-        } else {
-          setFillColor(undefined);
-        }
-      } else {
-        setFillColor(undefined);
-      }
-    }
   };
-
-  // Apply style changes to the selected cell
-  const applyStyles = () => {
-    if (!selectedCell || !workbook || !currentSheet) return;
-    const ws = workbook.Sheets[currentSheet];
-    const cell_addr = XLSX.utils.encode_cell({r:selectedCell.r,c:selectedCell.c});
-    if (!ws[cell_addr]) {
-      ws[cell_addr] = { t: 's', v: '', s:{}};
-    }
-    if (!ws[cell_addr].s) ws[cell_addr].s = {};
-    if (!ws[cell_addr].s.font) ws[cell_addr].s.font = {};
-
-    // Font styles
-    ws[cell_addr].s.font.bold = bold || undefined;
-    ws[cell_addr].s.font.italic = italic || undefined;
-    ws[cell_addr].s.font.underline = underline ? true : undefined;
-    ws[cell_addr].s.font.sz = fontSize || undefined;
-    if (fontColor) {
-      // Convert #RRGGBB to Argb form: FF + RRGGBB
-      let hex = fontColor.replace('#','').toUpperCase();
-      if (hex.length === 3) {
-        hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-      }
-      ws[cell_addr].s.font.color = {rgb:"FF"+hex};
-    } else {
-      delete ws[cell_addr].s.font.color;
-    }
-
-    // Fill color
-    if (fillColor) {
-      let hex = fillColor.replace('#','').toUpperCase();
-      if (hex.length === 3) {
-        hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-      }
-      if (!ws[cell_addr].s.fill) ws[cell_addr].s.fill = {};
-      ws[cell_addr].s.fill = {
-        patternType: "solid",
-        fgColor: {rgb:"FF"+hex},
-        bgColor: {indexed:64}
-      };
-    } else {
-      if (ws[cell_addr].s.fill) {
-        delete ws[cell_addr].s.fill;
-      }
-    }
-
-    // Refresh UI
-    loadCurrentSheet();
-  }
-
-  useEffect(() => {
-    applyStyles();
-  }, [bold, italic, underline, fontSize, fontColor, fillColor]);
 
   const handleCellChange = (r: number, c: number, value: string) => {
     if (!workbook || !currentSheet) return;
@@ -182,13 +115,13 @@ export default function XLSXPage() {
       ws[cell_addr] = { t: 's', v: value };
     } else {
       ws[cell_addr].v = value;
-      if (typeof value === 'number') {
+      if (!isNaN(Number(value)) && value.trim() !== '') {
         ws[cell_addr].t = 'n';
+        ws[cell_addr].v = Number(value);
       } else {
         ws[cell_addr].t = 's';
       }
     }
-    // Update local sheetData
     const newData = [...sheetData];
     newData[r][c] = value;
     setSheetData(newData);
@@ -212,96 +145,180 @@ export default function XLSXPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [workbook]);
 
+  // Column resizing
+  const onColMouseDown = (e: React.MouseEvent<HTMLDivElement>, colIndex: number) => {
+    e.preventDefault();
+    resizingColRef.current = {
+      index: colIndex,
+      startX: e.clientX,
+      startWidth: colWidths[colIndex],
+    };
+    document.addEventListener('mousemove', onColMouseMove);
+    document.addEventListener('mouseup', onColMouseUp);
+  };
+  const onColMouseMove = (e: MouseEvent) => {
+    if (!resizingColRef.current) return;
+    const delta = e.clientX - resizingColRef.current.startX;
+    const newWidth = Math.max(resizingColRef.current.startWidth + delta, 30);
+    const newColWidths = [...colWidths];
+    newColWidths[resizingColRef.current.index] = newWidth;
+    setColWidths(newColWidths);
+  };
+  const onColMouseUp = (e: MouseEvent) => {
+    document.removeEventListener('mousemove', onColMouseMove);
+    document.removeEventListener('mouseup', onColMouseUp);
+    resizingColRef.current = null;
+  };
+
+  // Row resizing
+  const onRowMouseDown = (e: React.MouseEvent<HTMLDivElement>, rowIndex: number) => {
+    e.preventDefault();
+    resizingRowRef.current = {
+      index: rowIndex,
+      startY: e.clientY,
+      startHeight: rowHeights[rowIndex],
+    };
+    document.addEventListener('mousemove', onRowMouseMove);
+    document.addEventListener('mouseup', onRowMouseUp);
+  };
+  const onRowMouseMove = (e: MouseEvent) => {
+    if (!resizingRowRef.current) return;
+    const delta = e.clientY - resizingRowRef.current.startY;
+    const newHeight = Math.max(resizingRowRef.current.startHeight + delta, 15);
+    const newRowHeights = [...rowHeights];
+    newRowHeights[resizingRowRef.current.index] = newHeight;
+    setRowHeights(newRowHeights);
+  };
+  const onRowMouseUp = (e: MouseEvent) => {
+    document.removeEventListener('mousemove', onRowMouseMove);
+    document.removeEventListener('mouseup', onRowMouseUp);
+    resizingRowRef.current = null;
+  };
+
+  // Render column headers
+  const renderColumnHeaders = () => {
+    let colsCount = (sheetData[0] || []).length;
+    if (useFirstRowAsHeader && sheetData.length > 0) {
+      // Use first row as headers
+      return (
+        <tr style={{height: 24}}>
+          <th style={{width:rowHeaderWidth, border:'1px solid #ccc', background:'#eee', minWidth: rowHeaderWidth}}></th>
+          {colWidths.map((w, colIndex) => (
+            <th key={colIndex} style={{border:'1px solid #ccc', position:'relative', width:w, minWidth:w}}>
+              {sheetData[0][colIndex]}
+              <div
+                style={{position:'absolute', top:0, right:0, width:'5px', cursor:'col-resize', height:'100%'}}
+                onMouseDown={(e)=>onColMouseDown(e,colIndex)}
+              ></div>
+            </th>
+          ))}
+        </tr>
+      );
+    } else {
+      // Use normal A,B,C...
+      return (
+        <tr style={{height: 24}}>
+          <th style={{width:rowHeaderWidth, border:'1px solid #ccc', background:'#eee', minWidth: rowHeaderWidth}}></th>
+          {colWidths.map((w, colIndex) => (
+            <th key={colIndex} style={{border:'1px solid #ccc', position:'relative', width:w, minWidth:w}}>
+              {columnName(colIndex)}
+              <div
+                style={{position:'absolute', top:0, right:0, width:'5px', cursor:'col-resize', height:'100%'}}
+                onMouseDown={(e)=>onColMouseDown(e,colIndex)}
+              ></div>
+            </th>
+          ))}
+        </tr>
+      );
+    }
+  };
+
+  // Render rows
+  const renderRows = () => {
+    const dataRows = useFirstRowAsHeader ? sheetData.slice(1) : sheetData;
+    return dataRows.map((row, r) => {
+      const actualRowIndex = useFirstRowAsHeader ? r+1 : r;
+      return (
+        <tr key={r} style={{height:rowHeights[actualRowIndex] || 24}}>
+          <th style={{width:rowHeaderWidth, border:'1px solid #ccc', position:'relative', background:'#eee', minWidth: rowHeaderWidth}}>
+            {actualRowIndex+1}
+            <div
+              style={{position:'absolute', bottom:0, left:0, height:'5px', cursor:'row-resize', width:'100%'}}
+              onMouseDown={(e)=>onRowMouseDown(e,actualRowIndex)}
+            ></div>
+          </th>
+          {row.map((cell, c) => {
+            let cellStyle: React.CSSProperties = {
+              width: colWidths[c],
+              minWidth: colWidths[c],
+              maxWidth: colWidths[c],
+              overflow:'auto', // allow scroll if content grows
+              wordWrap:'break-word', // wrap text
+              padding:'4px', 
+              border:'1px solid #ccc',
+              display:'table-cell', // ensure table cell behavior
+              verticalAlign:'top' // text starts at top
+            };
+            return (
+              <td key={c} 
+                onClick={() => handleCellClick(actualRowIndex,c)} 
+                style={cellStyle}>
+                <textarea
+                  style={{
+                    width:'100%',
+                    height:'100%',
+                    resize:'none',
+                    boxSizing:'border-box',
+                    background:'transparent',
+                    border:'none',
+                    overflow:'auto',
+                    display:'block',
+                    fontSize:'14px',
+                    lineHeight:'1.2',
+                  }}
+                  value={cell || ''}
+                  onChange={(e)=>handleCellChange(actualRowIndex,c,e.target.value)}
+                />
+              </td>
+            );
+          })}
+        </tr>
+      );
+    });
+  };
+
   return (
-    <div className="w-screen h-screen flex flex-col">
-      {/* Top toolbar */}
+    <div className="w-screen h-screen flex flex-col overflow-hidden">
+      {/* Top toolbar (removed text styling, only keep save and checkbox) */}
       <div className="p-2 border-b border-gray-300 flex items-center gap-2 bg-gray-100">
-        <Button variant={bold ? 'default': 'outline'} onClick={() => setBold(!bold)}>B</Button>
-        <Button variant={italic ? 'default': 'outline'} onClick={() => setItalic(!italic)}><i>I</i></Button>
-        <Button variant={underline ? 'default': 'outline'} onClick={() => setUnderline(!underline)}><u>U</u></Button>
-        <select
-          className="border rounded p-1"
-          value={fontSize || ''}
-          onChange={(e) => {
-            const val = parseInt(e.target.value,10);
-            setFontSize(isNaN(val) ? undefined : val);
-          }}>
-          <option value="">Font Size</option>
-          {fontSizes.map(sz => <option key={sz} value={sz}>{sz}</option>)}
-        </select>
-        <select
-          className="border rounded p-1"
-          value={fontColor || ''}
-          onChange={(e) => {
-            const val = e.target.value;
-            setFontColor(val || undefined);
-          }}>
-          <option value="">Text Color</option>
-          {colors.map(c=><option key={c} value={c}>{c}</option>)}
-        </select>
-        <select
-          className="border rounded p-1"
-          value={fillColor || ''}
-          onChange={(e) => {
-            const val = e.target.value;
-            setFillColor(val || undefined);
-          }}>
-          <option value="">Cell Color</option>
-          {bgColors.map(c=><option key={c} value={c}>{c}</option>)}
-        </select>
         <Button onClick={saveFile} disabled={isLoading}>
-          {isLoading ? 'Saving...' : isSuccess ? 'Saved!' : <Save/>}
+          {isLoading ? 'Saving...' : isSuccess ? 'Saved!' : 'Save'}
         </Button>
+        <label className="flex items-center gap-2 ml-4">
+          <input
+            type="checkbox"
+            checked={useFirstRowAsHeader}
+            onChange={(e)=>setUseFirstRowAsHeader(e.target.checked)}
+          />
+          Use first row as column titles
+        </label>
       </div>
 
-      {/* Main table */}
-      <div className="flex-1 overflow-auto">
-        <table className="border-collapse w-full">
+      {/* Main table container */}
+      {/* Combine headers and table into one single table to remove extra space */}
+      <div className="flex-1 overflow-auto" ref={tableRef} style={{position:'relative'}}>
+        <table style={{borderCollapse:'collapse', tableLayout:'fixed', width:'max-content'}}>
+          <thead style={{position:'sticky', top:0, background:'#f5f5f5', zIndex:2}}>
+            {renderColumnHeaders()}
+          </thead>
           <tbody>
-            {sheetData.map((row, r) => (
-              <tr key={r}>
-                {row.map((cell, c) => {
-                  // extract style
-                  let cellStyle: React.CSSProperties = {};
-                  if (workbook && currentSheet) {
-                    const ws = workbook.Sheets[currentSheet];
-                    const cell_addr = XLSX.utils.encode_cell({r,c});
-                    const xcell = ws[cell_addr];
-                    if (xcell && xcell.s) {
-                      if (xcell.s.font) {
-                        if (xcell.s.font.bold) cellStyle.fontWeight = 'bold';
-                        if (xcell.s.font.italic) cellStyle.fontStyle = 'italic';
-                        if (xcell.s.font.underline) cellStyle.textDecoration = 'underline';
-                        if (xcell.s.font.sz) cellStyle.fontSize = xcell.s.font.sz+'px';
-                        if (xcell.s.font.color && xcell.s.font.color.rgb) {
-                          cellStyle.color = '#'+xcell.s.font.color.rgb.slice(2);
-                        }
-                      }
-                      if (xcell.s.fill && xcell.s.fill.fgColor && xcell.s.fill.fgColor.rgb) {
-                        cellStyle.backgroundColor = '#'+xcell.s.fill.fgColor.rgb.slice(2);
-                      }
-                    }
-                  }
-                  return (
-                    <td key={c} 
-                      onClick={() => handleCellClick(r,c)} 
-                      style={{border:'1px solid #ccc', padding:'4px', ...cellStyle}}>
-                      <input 
-                        className="w-full bg-transparent border-none focus:outline-none"
-                        value={cell || ''}
-                        onChange={(e)=>handleCellChange(r,c,e.target.value)}
-                      />
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+            {renderRows()}
           </tbody>
         </table>
       </div>
 
       {/* Bottom sheet selector */}
-      <div className="p-2 border-t border-gray-300 flex justify-center bg-gray-100">
+      <div className="p-2 border-t border-gray-300 flex justify-start bg-gray-100">
         {sheetNames.map(sn => (
           <Button 
             key={sn} 
@@ -315,5 +332,4 @@ export default function XLSXPage() {
       </div>
     </div>
   );
-
 }
