@@ -131,7 +131,7 @@ export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange
         'Text': 'String',
         'Choice': 'Enumeration',
         'Date': 'Date',
-        'List': 'Fields'
+        'Sheet': 'Fields'
     }
     const Revesed = Object.keys(TypePublicNames).reduce((acc, key) => {
         acc[TypePublicNames[key]] = key;
