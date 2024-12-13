@@ -31,9 +31,6 @@ export default function XLSXPage() {
   const [sheetData, setSheetData] = useState<(string|number)[][]>([]);
   const [selectedCell, setSelectedCell] = useState<{r: number; c: number} | null>(null);
 
-  // Removed styling states (bold, italic, underline, fontSize, fontColor, fillColor)
-  // Removed any references to applyStyles
-
   // For resizing
   const [colWidths, setColWidths] = useState<number[]>([]);
   const [rowHeights, setRowHeights] = useState<number[]>([]);
@@ -90,18 +87,8 @@ export default function XLSXPage() {
     loadCurrentSheet();
   }, [workbook, currentSheet]);
 
-  useEffect(() => {
-    // After the data is loaded and rendered, adjust row heights according to the rendered table cells
-    requestAnimationFrame(() => {
-      if (!tableRef.current) return;
-      const rows = tableRef.current.querySelectorAll('tbody tr');
-      const newRowHeights = Array.from(rows).map((rowEl) => {
-        const rect = (rowEl as HTMLTableRowElement).getBoundingClientRect();
-        return rect.height || 24;
-      });
-      setRowHeights(newRowHeights);
-    });
-  }, [sheetData, useFirstRowAsHeader]);
+  // Removed the effect that recalculated rowHeights after sheetData changes.
+  // This prevents changing cell content from altering the row heights automatically.
 
   const handleCellClick = (r: number, c: number) => {
     setSelectedCell({r, c});
@@ -197,19 +184,21 @@ export default function XLSXPage() {
 
   // Render column headers
   const renderColumnHeaders = () => {
-    let colsCount = (sheetData[0] || []).length;
     if (useFirstRowAsHeader && sheetData.length > 0) {
       // Use first row as headers
       return (
         <tr style={{height: 24}}>
-          <th style={{width:rowHeaderWidth, border:'1px solid #ccc', background:'#eee', minWidth: rowHeaderWidth}}></th>
+          <th style={{width:rowHeaderWidth, background:'#eee', minWidth: rowHeaderWidth}}></th>
           {colWidths.map((w, colIndex) => (
-            <th key={colIndex} style={{border:'1px solid #ccc', position:'relative', width:w, minWidth:w}}>
+            <th 
+            key={colIndex} 
+            style={{position:'relative', background:'#eee', width:w, minWidth:w, fontSize:'14px', lineHeight:'1.2', padding:'5px 10px'}}
+            >
               {sheetData[0][colIndex]}
-              <div
-                style={{position:'absolute', top:0, right:0, width:'5px', cursor:'col-resize', height:'100%'}}
+                <div
+                style={{position:'absolute', top:0, right:0, cursor:'col-resize', height:'100%', width:'2px', background:'#cfc9c8'}}
                 onMouseDown={(e)=>onColMouseDown(e,colIndex)}
-              ></div>
+                ></div>
             </th>
           ))}
         </tr>
@@ -220,10 +209,10 @@ export default function XLSXPage() {
         <tr style={{height: 24}}>
           <th style={{width:rowHeaderWidth, border:'1px solid #ccc', background:'#eee', minWidth: rowHeaderWidth}}></th>
           {colWidths.map((w, colIndex) => (
-            <th key={colIndex} style={{border:'1px solid #ccc', position:'relative', width:w, minWidth:w}}>
+            <th key={colIndex} style={{position:'relative', background:'#eee', width:w, minWidth:w, fontSize:'14px', lineHeight:'1.2', padding:'5px 10px'}}>
               {columnName(colIndex)}
               <div
-                style={{position:'absolute', top:0, right:0, width:'5px', cursor:'col-resize', height:'100%'}}
+                style={{position:'absolute', top:0, right:0, cursor:'col-resize', height:'100%', width:'2px', background:'#cfc9c8'}}
                 onMouseDown={(e)=>onColMouseDown(e,colIndex)}
               ></div>
             </th>
@@ -248,16 +237,18 @@ export default function XLSXPage() {
             ></div>
           </th>
           {row.map((cell, c) => {
+            let cellHeight = rowHeights[actualRowIndex] || 24;
             let cellStyle: React.CSSProperties = {
               width: colWidths[c],
               minWidth: colWidths[c],
               maxWidth: colWidths[c],
-              overflow:'auto', // allow scroll if content grows
-              wordWrap:'break-word', // wrap text
-              padding:'4px', 
+              overflow:'hidden', // fixed: prevent cell from resizing automatically
+              wordWrap:'break-word',
+              padding:'4px',
               border:'1px solid #ccc',
-              display:'table-cell', // ensure table cell behavior
-              verticalAlign:'top' // text starts at top
+              display:'table-cell',
+              verticalAlign:'top',
+              height: cellHeight // ensure td has a fixed height
             };
             return (
               <td key={c} 
@@ -273,7 +264,7 @@ export default function XLSXPage() {
                     border:'none',
                     overflow:'auto',
                     display:'block',
-                    fontSize:'14px',
+                    fontSize:'12px',
                     lineHeight:'1.2',
                   }}
                   value={cell || ''}
