@@ -45,6 +45,7 @@ const Page = () => {
         window.addEventListener('keydown', handleSave);
         return () => window.removeEventListener('keydown', handleSave);
     }, [jsonNL]);
+    const [droppedField, setDroppedField] = useState<string | null>(null);
     return (
         <div>
             <div className="flex justify-end p-4 cursor-pointer" onClick={saveFile}>
@@ -54,6 +55,8 @@ const Page = () => {
                 <DataStructureEl
                 className='p-2 pt-0'
                     data_structure={jsonNL}
+                    droppedField={droppedField}
+                    setDroppedField={setDroppedField}
                     onChange={setJsonNL}
                     onAddField={() => {
                         setJsonNL({...jsonNL, fields: [...jsonNL.fields, {object_name: '', object_description: '', object_required: true, object_type: {string: 'string', string_maxLength : null}}]});

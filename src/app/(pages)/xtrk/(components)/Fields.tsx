@@ -13,9 +13,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Grip, X } from 'lucide-react';
 import { Boolean, BooleanEl } from './Boolean';
 import { DataStructure, DataStructureEl } from './DataStructure';
+import { on } from 'events';
 
 function rep(s: string) {
     return s
@@ -30,9 +31,20 @@ export interface Fields {
     object_description: string;
     object_required: boolean;
     object_type: Boolean | Integer | Number | String | Enumeration | Date | DataStructure;
+    global_id?: string;
 }
 
-export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange: (updatedFields: Fields) => void, onDelete: () => void }) => {
+export const FieldEl = (
+    { field, onChange, onDelete, droppedField, setDroppedField, onAddBefore }
+    : 
+    { 
+        field: Fields, 
+        onChange: (updatedFields: Fields) => void, 
+        onDelete: () => void,
+        droppedField: string | null, 
+        setDroppedField: (field: string | null) => void,
+        onAddBefore: (field: Fields) => void
+    }) => {
     const inferType = (object_type: any) => {
         if ('boolean' in object_type) {
             return 'Boolean';
@@ -110,6 +122,8 @@ export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange
                     }}
                     data_structure={field.object_type as DataStructure} 
                     onChange={(updated) => onChange({ ...field, object_type: updated })} 
+                    droppedField={droppedField}
+                    setDroppedField={setDroppedField}
             />}
             </>
         )
@@ -138,8 +152,39 @@ export const FieldEl = ({ field, onChange, onDelete }: { field: Fields, onChange
         return acc;
     }, {} as { [key: string]: string });
     const options = Object.keys(TypePublicNames);
+    const [isDraggedOver, setIsDraggedOver] = useState(false);
+    const onDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+        setDroppedField(null);
+        e.dataTransfer.setData('text/plain2', JSON.stringify(field));
+    }
+    const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        setIsDraggedOver(false);
+        console.log('received data', e.dataTransfer.getData('text/plain2'));
+        const dropped = JSON.parse(e.dataTransfer.getData('text/plain2')) as Fields;
+        setDroppedField(dropped.object_name);
+        onAddBefore(dropped);
+    }
+    const onDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+        const isMe = droppedField === field.object_name;
+        console.log('drag ended, dropped field', droppedField, 'is me', isMe);
+        if (isMe) onDelete();
+    }
     return (
-        <Card className='relative h-full rounded-2xl'>
+        <Card 
+            onDragOver={(e) => {
+                e.preventDefault();
+                setIsDraggedOver(true);
+            }}
+            onDrop={onDrop}
+            onDragLeave={() => setIsDraggedOver(false)}
+            className={`relative h-full rounded-2xl ${isDraggedOver && 'border-l-4'}`}>
+            <div 
+                onDragStart={onDragStart}
+                onDragEnd={onDragEnd}
+                draggable
+                className='absolute top-0 right-8 text-gray-300'>
+                <Grip className='absolute top-1 left-1 cursor-move'/>
+            </div>
             <div className='absolute bottom-1 right-1'>
                 <Button 
                     variant={'ghost'}

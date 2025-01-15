@@ -8,7 +8,6 @@ import { Switch } from '@/components/ui/switch';
 import { ValueType, getValueTypeLabels } from '../Extraction';
 
 export default function Entry({data, onDeleteClick, setDocHasBeenModified}: {data: _Entry, onDeleteClick: () => void, setDocHasBeenModified: (value: boolean) => void}) {
-    console.log(data)
     const [name, setName] = useState<string>(data.name);
     const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {  const newValue = e.target.value; 
         // the value should be uppercase and underscores, but no spaces, no special characters, and no numbers
