@@ -171,13 +171,16 @@ export const FieldEl = (
     }
     return (
         <Card 
-            onDragOver={(e) => {
-                e.preventDefault();
-                setIsDraggedOver(true);
-            }}
-            onDrop={onDrop}
-            onDragLeave={() => setIsDraggedOver(false)}
-            className={`relative h-full rounded-2xl ${isDraggedOver && 'border-l-4'}`}>
+            className={`relative h-full rounded-lg`}>
+            <div
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDraggedOver(true);
+                }}
+                onDrop={onDrop}
+                onDragLeave={() => setIsDraggedOver(false)}
+                className={`absolute h-full rounded-l-md border-gray-400 w-6 ${isDraggedOver && 'border-l-4'}`}>
+            </div>
             <div 
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
