@@ -27,7 +27,8 @@ rows: NotationCriteria[];
 }
 
 interface Grid {
-rows: GridSection[];
+    context?: string;
+    rows: GridSection[];
 }  
 
 const GridC = () => {
@@ -238,6 +239,18 @@ const GridC = () => {
             </div>
         );
     }
+    const [context, setContext] = useState(jsonNL?.context);
+    useEffect(() => {
+        if (jsonNL) {
+            setContext(jsonNL.context);
+        }
+    }, [jsonNL]);
+    const updateContext = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        if (!jsonNL) return;
+        jsonNL.context = e.target.value;
+        setContext(e.target.value);
+        setModified(true);
+    }
 
     return (
         <div className="w-screen h-screen relative overflow-y-auto text-center ">
@@ -251,7 +264,20 @@ const GridC = () => {
                 </div>
                     }
             {jsonNL && url && (
-            <GridComponent grid={jsonNL}/>
+            <div>
+                <div className="p-4 flex flex-col items-start">
+                    <h1 className="text-2xl font-bold mb-2">Context</h1>
+                    <Textarea
+                        placeholder="Context"
+                        className='text-lg w-full p-4 border rounded shadow-sm min-h-32 resize-none rounded-lg'
+                        value={context}
+                        onChange={updateContext}
+                    />
+                </div>
+                <div className="p-2">
+                    <GridComponent grid={jsonNL} />
+                </div>
+            </div>
             )}
         </div>
     );

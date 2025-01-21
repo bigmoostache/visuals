@@ -5,10 +5,9 @@ import usePatchFile from '../(hooks)/usePatchFile';
 import { useEffect, useState } from 'react'
 import { Suspense } from 'react'
 import { Button } from "@/components/ui/button"
-import { Plus, Trash2, X } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { on } from 'events';
 
 interface ExclusionCriteria {
     exclusion_criteria_description: string; // Describe precisely the situation where this exclusion criteria should be applied.
@@ -21,7 +20,8 @@ name: string; // The name of the selection criteria. Should be upper, no special
 }
 
 interface Select {
-selection_criteria: (ExclusionCriteria | InclusionCriteria)[]; // List of selection criteria
+    context?: string; // The context of the selection criteria
+    selection_criteria: (ExclusionCriteria | InclusionCriteria)[]; // List of selection criteria
 }
 
   
@@ -94,7 +94,7 @@ const SelectC = () => {
         }
         const isInclusion = 'inclusion_criteria_description' in criteria;
         return (
-            <div className={`flex flex-row gap-x-2 justify-center my-2 p-3 ${isInclusion ? 'bg-green-50' : 'bg-red-50'} border-2 ${isInclusion ? 'border-green-100' : 'border-red-100'} rounded-xl shadow-xl`}>
+            <div className={`flex flex-row gap-x-2 justify-center m-4 p-3 ${isInclusion ? 'bg-indigo-50' : 'bg-red-50'} border-4 ${isInclusion ? 'border-indigo-300' : 'border-red-300'} rounded-md`}>
                 <Input 
                     value={name} 
                     onChange={onNameChange} 
