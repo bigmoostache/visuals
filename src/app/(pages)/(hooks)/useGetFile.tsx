@@ -10,7 +10,8 @@ const useGetFile = ({ fetchUrl, onSucess }: Props) => {
         data,
         isLoading,
         error,
-        isSuccess
+        isSuccess,
+        refetch
     } = useQuery<any, Error>({
         queryKey: [fetchUrl],
         queryFn: async () => {
@@ -30,6 +31,7 @@ const useGetFile = ({ fetchUrl, onSucess }: Props) => {
         data,
         isLoading,
         error,
+        refetch
     };
 };
 

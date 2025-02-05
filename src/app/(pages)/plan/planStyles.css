@@ -1,0 +1,44 @@
+.plan-page {
+  padding: 20px;
+  font-family: sans-serif;
+}
+
+.plan-section {
+  margin: 10px 0;
+  padding: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.plan-section:hover {
+  background-color: #f9f9f9;
+}
+
+.plan-section-header {
+  display: flex;
+  gap: 10px;
+}
+
+.plan-section-body {
+  margin-top: 10px;
+}
+
+.plan-subsections {
+  margin-top: 10px;
+  padding-left: 20px;
+}
+
+.plan-leaf {
+  margin-top: 10px;
+}
+
+.plan-input {
+  margin: 5px 0;
+  padding: 5px;
+}
+
+.plan-textarea {
+  margin: 5px 0;
+  padding: 5px;
+  width: 100%;
+  min-height: 50px;
+}
