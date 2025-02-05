@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Plan as PlanInterface } from './interfaces';
 import './planStyles.css';
 import { Trash2 } from 'lucide-react';
+import LucarioDisplay from './LucarioDisplay';
 
 // New component to handle bullet points input with local state and sufficient height.
 const BulletPointsInput = ({ initialBulletText, onBulletChange }: { initialBulletText: string, onBulletChange: (lines: string[]) => void }) => {
@@ -36,7 +37,7 @@ const PlanPage = () => {
   const { mutate, isLoading } = usePatchFile({ fetchUrl: url as string });
 
   const [plan, setPlan] = useState<PlanInterface | null>(null);
-
+  console.log("Plan", plan);
   useEffect(() => {
     if (!data) return;
     const reader = new FileReader();
@@ -156,6 +157,7 @@ const PlanPage = () => {
         <div>
           <Button onClick={onSave} disabled={isLoading}>{isLoading ? "Saving..." : "Save"}</Button>
           <PlanSection section={plan} onUpdate={(updated) => setPlan(prev => ({ ...prev, ...updated }))} />
+            {plan.lucario && <LucarioDisplay lucario={plan.lucario} />}
         </div>
       ) : (
         <p>Loading plan...</p>
