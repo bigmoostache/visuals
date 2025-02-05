@@ -9,8 +9,8 @@
   transition: background-color 0.3s ease;
 }
 
-.plan-section:hover {
-  background-color: #f9f9f9;
+.plan-textarea:hover, .plan-input:hover {
+  background-color: #eeeeee;
 }
 
 .plan-section-header {

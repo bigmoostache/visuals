@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -166,4 +166,13 @@ const PlanPage = () => {
   );
 };
 
-export default PlanPage;
+const PlanPageC = () => {
+    return (
+      // You could have a loading skeleton as the `fallback` too
+      <Suspense>
+        <PlanPage />
+      </Suspense>
+    )
+}
+
+export default PlanPageC;
