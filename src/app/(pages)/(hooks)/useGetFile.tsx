@@ -3,7 +3,7 @@ import { useQuery } from "react-query";
 interface Props {
     fetchUrl: string;
     onSucess?: () => void;
-  }
+}
 
 const useGetFile = ({ fetchUrl, onSucess }: Props) => {
     const {
@@ -16,7 +16,8 @@ const useGetFile = ({ fetchUrl, onSucess }: Props) => {
         queryKey: [fetchUrl],
         queryFn: async () => {
             const res = await fetch(fetchUrl, {
-                method: "GET"
+                method: "GET",
+                credentials: "include", // This includes cookies in the request
             });
             
             const blob = await res.blob();
