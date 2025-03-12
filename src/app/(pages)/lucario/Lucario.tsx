@@ -139,13 +139,6 @@ const LucarioComponent = () => {
     }
   };
 
-  // On page load, handleUpdate
-  useEffect(() => {
-    if (hasLoaded) return;
-    hasLoaded = true;
-    handleUpdate();
-  }, [data]);
-
   // File selection handler
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
