@@ -55,22 +55,17 @@ export interface Lucario {
   uuid_2_position: { [key: string]: number };
 }
 
-const LucarioComponent = () => {
+// LucarioComponentWrapper: Responsible for fetching the Lucario data
+const LucarioComponentWrapper = () => {
   // Retrieve URL parameters
   const searchParams = useSearchParams()
   const fileUrl = searchParams.get('url')
 
   // Fetch the file blob
   const { data } = useGetFile({ fetchUrl: fileUrl || '' });
-  const { mutate, isLoading } = usePatchFile({ fetchUrl: fileUrl || '' });
+  const { mutate, isLoading: isMutating } = usePatchFile({ fetchUrl: fileUrl || '' });
   const [lucario, setLucario] = useState<Lucario | null>(null);
   
-  // Upload state
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
-  const [uploadMessage, setUploadMessage] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     if (!data) return;
     const reader = new FileReader();
@@ -86,22 +81,50 @@ const LucarioComponent = () => {
   }, [data]);
 
   // Convert the Lucario object back to a File for upload
-  const convertToBlob = (data: Lucario) => {
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    return new File([blob], 'filename.lucario', { lastModified: Date.now(), type: blob.type });
+  const saveLucario = (updatedData: Lucario) => {
+    const blob = new Blob([JSON.stringify(updatedData)], { type: 'application/json' });
+    const file = new File([blob], 'filename.lucario', { lastModified: Date.now(), type: blob.type });
+    mutate(file);
   };
 
-  const saveLucario = (updatedData: Lucario) => {
-    mutate(convertToBlob(updatedData));
-  };
+  return lucario ? (
+    <div className='lucario-bg'>
+      <LucarioComponent 
+        lucario={lucario} 
+        setLucario={setLucario} 
+        saveLucario={saveLucario} 
+        isMutating={isMutating} 
+      />
+    </div>
+  ) : (
+    <div className='lucario-bg'><p className="lucario-loading">Loading Lucario data...</p></div>
+  );
+};
+
+// Pure LucarioComponent that only works with provided Lucario data
+const LucarioComponent = ({ 
+  lucario, 
+  setLucario, 
+  saveLucario, 
+  isMutating 
+}: { 
+  lucario: Lucario; 
+  setLucario: React.Dispatch<React.SetStateAction<Lucario | null>>; 
+  saveLucario: (updatedData: Lucario) => void;
+  isMutating: boolean;
+}) => {
+  // Upload state
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [uploadMessage, setUploadMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update the Lucario file using data from an external endpoint
   const handleUpdate = async () => {
-    if (!lucario) return;
     // Build a comma-separated list of file_uuids from the existing documents
     try {
       const response = await fetch(
-        `https://lucario.deepdocs.net/files_simple?key=${lucario.project_id}`,
+        `${lucario.url}/files_simple?key=${lucario.project_id}`,
         {
           headers: {
             accept: "application/json",
@@ -166,7 +189,7 @@ const LucarioComponent = () => {
   
   // Handle file upload
   const handleUpload = async () => {
-    if (!uploadFile || !lucario) {
+    if (!uploadFile) {
       setUploadMessage('Please select a file first');
       return;
     }
@@ -179,7 +202,7 @@ const LucarioComponent = () => {
       formData.append('file', uploadFile);
       formData.append('data', 'Uploaded from Lucario UI');
       
-      const response = await fetch('https://lucario.deepdocs.net/upload', {
+      const response = await fetch(`${lucario.url}/upload`, {
         method: 'POST',
         headers: {
           'filename': uploadFile.name,
@@ -268,7 +291,7 @@ const LucarioComponent = () => {
         </p>
         <p className="document-link">
           <a 
-            href={`${lucario?.url}/files?file=${doc.file_uuid}`} 
+            href={`${lucario.url}/files?file=${doc.file_uuid}`} 
             target="_blank" 
             rel="noopener noreferrer" 
             className="download-link"
@@ -298,12 +321,12 @@ const LucarioComponent = () => {
   }
 
   return (
-    <div className="min-h-screen lucario-bg flex items-center justify-center py-10">
+    <div className="min-h-screen flex items-center justify-center py-10">
       <div className="lucario-card">
         <h1 className="lucario-title">Knowledge Base Files</h1>
         <div className="lucario-update-button-container mb-4">
-          <Button onClick={handleUpdate} disabled={isLoading}>
-            {isLoading ? "Updating..." : "Update & Save"}
+          <Button onClick={handleUpdate} disabled={isMutating}>
+            {isMutating ? "Updating..." : "Update & Save"}
           </Button>
         </div>
         {/* Upload Section */}
@@ -384,17 +407,13 @@ const LucarioComponent = () => {
         
         <div className="separator"></div>
         
-        {lucario ? (
-          <div>
-            <div className="lucario-grid">
-              {Object.values(lucario.elements).map((doc: Document) => (
-                <LucarioElement key={doc.file_id} doc={doc} />
-              ))}
-            </div>
+        <div>
+          <div className="lucario-grid">
+            {Object.values(lucario.elements).map((doc: Document) => (
+              <LucarioElement key={doc.file_id} doc={doc} />
+            ))}
           </div>
-        ) : (
-          <p className="lucario-loading">Loading Lucario data...</p>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -404,8 +423,11 @@ const LucarioComponentC = () => {
   return (
     // You could have a loading skeleton as the `fallback` too
     <Suspense>
-      <LucarioComponent />
+      <LucarioComponentWrapper />
     </Suspense>
   )
 }
+
 export default LucarioComponentC;
+// Export the pure component to be used elsewhere
+export { LucarioComponent };

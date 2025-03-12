@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Plan as PlanInterface } from './interfaces';
 import './planStyles.css';
 import { Trash2 } from 'lucide-react';
-import LucarioDisplay from './LucarioDisplay';
+import { LucarioComponent } from '../lucario/Lucario';
 
 // New component to handle bullet points input with local state and sufficient height.
 const BulletPointsInput = ({ initialBulletText, onBulletChange }: { initialBulletText: string, onBulletChange: (lines: string[]) => void }) => {
@@ -57,6 +57,15 @@ const PlanPage = () => {
     const blob = new Blob([JSON.stringify(plan)], { type: 'application/json' });
     const file = new File([blob], 'plan.json', { lastModified: Date.now(), type: blob.type });
     mutate(file);
+  };
+
+  // Function to handle saving Lucario data
+  const saveLucarioData = (updatedLucario: any) => {
+    if (!plan) return;
+    setPlan({
+      ...plan,
+      lucario: updatedLucario
+    });
   };
 
   const PlanSection = ({ section, onUpdate, onDelete, depth = 0 }: { section: PlanInterface, onUpdate: (updated: PlanInterface) => void, onDelete?: () => void, depth?: number }) => {
@@ -157,7 +166,18 @@ const PlanPage = () => {
         <div>
           <Button onClick={onSave} disabled={isLoading}>{isLoading ? "Saving..." : "Save"}</Button>
           <PlanSection section={plan} onUpdate={(updated) => setPlan(prev => ({ ...prev, ...updated }))} />
-            {plan.lucario && <LucarioDisplay lucario={plan.lucario} />}
+          {plan.lucario && (
+            <LucarioComponent 
+              lucario={plan.lucario} 
+              setLucario={(updatedLucario) => {
+                if (updatedLucario) {
+                  saveLucarioData(updatedLucario);
+                }
+              }}
+              saveLucario={saveLucarioData}
+              isMutating={isLoading}
+            />
+          )}
         </div>
       ) : (
         <p>Loading plan...</p>
