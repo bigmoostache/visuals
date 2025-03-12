@@ -73,7 +73,6 @@ const LucarioComponent = () => {
   let hasLoaded = false;
 
   useEffect(() => {
-    handleUpdate();
     if (!data) return;
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -138,6 +137,13 @@ const LucarioComponent = () => {
       console.error("Error updating lucario:", error);
     }
   };
+
+  // On page load, handleUpdate
+  useEffect(() => {
+    if (hasLoaded) return;
+    hasLoaded = true;
+    handleUpdate();
+  }, [data]);
 
   // File selection handler
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
