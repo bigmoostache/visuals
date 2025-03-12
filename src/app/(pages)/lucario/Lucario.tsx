@@ -70,7 +70,6 @@ const LucarioComponent = () => {
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadMessage, setUploadMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  let hasLoaded = false;
 
   useEffect(() => {
     if (!data) return;
@@ -137,13 +136,6 @@ const LucarioComponent = () => {
       console.error("Error updating lucario:", error);
     }
   };
-
-  // On page load, handleUpdate
-  useEffect(() => {
-    if (hasLoaded) return;
-    hasLoaded = true;
-    handleUpdate();
-  }, [data]);
 
   // File selection handler
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
