@@ -113,10 +113,11 @@ const LucarioComponent = ({
   saveLucario: (updatedData: Lucario) => void;
   isMutating: boolean;
 }) => {
-  // Upload state
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  // Upload state - changed from single file to array of files
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadMessage, setUploadMessage] = useState('');
+  const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update the Lucario file using data from an external endpoint
@@ -160,11 +161,13 @@ const LucarioComponent = ({
     }
   };
 
-  // File selection handler
+  // File selection handler - updated to handle multiple files
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      setUploadFile(files[0]);
+      // Convert FileList to array and append to existing files
+      const newFiles = Array.from(files);
+      setUploadFiles(prevFiles => [...prevFiles, ...newFiles]);
       setUploadStatus('idle');
       setUploadMessage('');
     }
@@ -177,68 +180,117 @@ const LucarioComponent = ({
     }
   };
   
-  // Clear selected file
-  const clearSelectedFile = () => {
-    setUploadFile(null);
+  // Clear all selected files
+  const clearAllSelectedFiles = () => {
+    setUploadFiles([]);
     setUploadStatus('idle');
     setUploadMessage('');
+    setUploadProgress({});
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
   
-  // Handle file upload
+  // Remove a specific file from the selection
+  const removeFile = (index: number) => {
+    setUploadFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+    // Reset status if no files left
+    if (uploadFiles.length === 1) {
+      setUploadStatus('idle');
+      setUploadMessage('');
+    }
+  };
+  
+  // Handle file upload - updated to handle multiple files
   const handleUpload = async () => {
-    if (!uploadFile) {
-      setUploadMessage('Please select a file first');
+    if (uploadFiles.length === 0) {
+      setUploadMessage('Please select at least one file first');
       return;
     }
     
     setUploadStatus('uploading');
-    setUploadMessage('Uploading file...');
+    setUploadMessage(`Uploading ${uploadFiles.length} file(s)...`);
     
-    try {
-      const formData = new FormData();
-      formData.append('file', uploadFile);
-      formData.append('data', 'Uploaded from Lucario UI');
-      
-      const response = await fetch(`${lucario.url}/upload`, {
-        method: 'POST',
-        headers: {
-          'filename': uploadFile.name,
-          'key': lucario.project_id,
-        },
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Upload failed with status: ${response.status}`);
+    // Track successful and failed uploads
+    let successCount = 0;
+    let failCount = 0;
+    
+    // Initialize progress tracking for each file
+    const initialProgress: {[key: string]: number} = {};
+    uploadFiles.forEach(file => {
+      initialProgress[file.name] = 0;
+    });
+    setUploadProgress(initialProgress);
+    
+    // Upload each file sequentially
+    for (const file of uploadFiles) {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('data', 'Uploaded from Lucario UI');
+        
+        const response = await fetch(`${lucario.url}/upload`, {
+          method: 'POST',
+          headers: {
+            'filename': file.name,
+            'key': lucario.project_id,
+          },
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Upload failed for ${file.name} with status: ${response.status}`);
+        }
+        
+        await response.json();
+        successCount++;
+        
+        // Update progress for this file
+        setUploadProgress(prev => ({
+          ...prev,
+          [file.name]: 100
+        }));
+        
+      } catch (error) {
+        console.error(`Error uploading file ${file.name}:`, error);
+        failCount++;
+        
+        // Mark this file's progress as failed
+        setUploadProgress(prev => ({
+          ...prev,
+          [file.name]: -1 // Using -1 to indicate error
+        }));
       }
-      
-      const result = await response.json();
-      setUploadStatus('success');
-      setUploadMessage('File uploaded successfully!');
-      
-      // Clear the file input after successful upload
-      setTimeout(() => {
-        clearSelectedFile();
-        // Refresh the file list
-        handleUpdate();
-      }, 2000);
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      setUploadStatus('error');
-      setUploadMessage(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+    
+    // Set final status message
+    if (failCount === 0) {
+      setUploadStatus('success');
+      setUploadMessage(`Successfully uploaded ${successCount} file(s)`);
+    } else if (successCount === 0) {
+      setUploadStatus('error');
+      setUploadMessage(`Failed to upload ${failCount} file(s)`);
+    } else {
+      setUploadStatus('error');
+      setUploadMessage(`Uploaded ${successCount} file(s), failed to upload ${failCount} file(s)`);
+    }
+    
+    // Clear the files and refresh the list after a delay
+    setTimeout(() => {
+      clearAllSelectedFiles();
+      // Refresh the file list
+      handleUpdate();
+    }, 2000);
   };
   
-  // Handle drop zone
+  // Handle drop zone - updated to handle multiple files
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setUploadFile(e.dataTransfer.files[0]);
+      const newFiles = Array.from(e.dataTransfer.files);
+      setUploadFiles(prevFiles => [...prevFiles, ...newFiles]);
       setUploadStatus('idle');
       setUploadMessage('');
     }
@@ -331,45 +383,92 @@ const LucarioComponent = ({
         </div>
         {/* Upload Section */}
         <div className="upload-section">
-          <h2 className="upload-title">Upload New Document</h2>
+          <h2 className="upload-title">Upload New Documents</h2>
           
           <div 
-            className={`upload-dropzone ${uploadFile ? 'has-file' : ''}`}
+            className={`upload-dropzone ${uploadFiles.length > 0 ? 'has-file' : ''}`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
-            onClick={uploadFile ? undefined : triggerFileInput}
+            onClick={uploadFiles.length > 0 ? undefined : triggerFileInput}
           >
             <input 
               type="file" 
               ref={fileInputRef}
               onChange={handleFileSelect}
               className="hidden"
+              multiple // Enable multiple file selection
             />
             
-            {!uploadFile ? (
+            {uploadFiles.length === 0 ? (
               <div className="upload-dropzone-inner">
                 <Upload size={40} className="upload-icon" />
-                <p className="upload-text">Drag & drop a file here, or click to select</p>
+                <p className="upload-text">Drag & drop files here, or click to select</p>
                 <p className="upload-subtext">Supported file types: PDF, DOCX, TXT, CSV, etc.</p>
               </div>
             ) : (
-              <div className="upload-file-info">
-                <div className="upload-file-details">
-                  <FileText size={24} className="upload-file-icon" />
-                  <div className="upload-file-name-container">
-                    <p className="upload-file-name">{uploadFile.name}</p>
-                    <p className="upload-file-size">{(uploadFile.size / 1024).toFixed(1)} KB</p>
-                  </div>
+              <div className="upload-files-list w-full">
+                <div className="upload-files-header">
+                  <p className="upload-files-count">{uploadFiles.length} file(s) selected</p>
+                  <button 
+                    className="upload-files-clear-all" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearAllSelectedFiles();
+                    }}
+                    aria-label="Clear all files"
+                  >
+                    Clear All
+                  </button>
                 </div>
+                
+                <div className="upload-files-items">
+                  {uploadFiles.map((file, index) => (
+                    <div key={`${file.name}-${index}`} className="upload-file-info">
+                      <div className="upload-file-details">
+                        <FileText size={24} className="upload-file-icon" />
+                        <div className="upload-file-name-container">
+                          <p className="upload-file-name">{file.name}</p>
+                          <p className="upload-file-size">{(file.size / 1024).toFixed(1)} KB</p>
+                          
+                          {/* Progress bar for file upload */}
+                          {uploadStatus === 'uploading' && uploadProgress[file.name] !== undefined && (
+                            <div className="upload-file-progress-container">
+                              <div 
+                                className={`upload-file-progress-bar ${uploadProgress[file.name] === -1 ? 'error' : ''}`}
+                                style={{ width: `${uploadProgress[file.name] === -1 ? 100 : uploadProgress[file.name]}%` }}
+                              ></div>
+                              <span className="upload-file-progress-text">
+                                {uploadProgress[file.name] === -1 ? 'Failed' : 
+                                 uploadProgress[file.name] === 100 ? 'Completed' : 
+                                 `${uploadProgress[file.name]}%`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button 
+                        className="upload-file-remove" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFile(index);
+                        }}
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Show "Add more files" button when files are already selected */}
                 <button 
-                  className="upload-file-remove" 
+                  className="upload-add-more" 
                   onClick={(e) => {
                     e.stopPropagation();
-                    clearSelectedFile();
+                    triggerFileInput();
                   }}
-                  aria-label="Remove file"
                 >
-                  <X size={20} />
+                  + Add More Files
                 </button>
               </div>
             )}
@@ -387,7 +486,7 @@ const LucarioComponent = ({
           <div className="upload-actions">
             <Button 
               onClick={handleUpload} 
-              disabled={!uploadFile || uploadStatus === 'uploading'}
+              disabled={uploadFiles.length === 0 || uploadStatus === 'uploading'}
               className="upload-button"
             >
               {uploadStatus === 'uploading' ? (
@@ -398,7 +497,7 @@ const LucarioComponent = ({
               ) : (
                 <>
                   <Upload size={16} className="mr-2" />
-                  Upload
+                  Upload {uploadFiles.length > 0 ? `(${uploadFiles.length})` : ''}
                 </>
               )}
             </Button>
