@@ -9,6 +9,7 @@ import { Trash2, Save, Plus, Check, GripVertical, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import {
   DndContext,
   closestCenter,
@@ -42,13 +43,16 @@ interface InclusionCriteria {
 interface Select {
     context?: string;
     selection_criteria: (ExclusionCriteria | InclusionCriteria)[];
+    langage?: string;
+    use_codes?: boolean;
 }
 
 // This component wraps the Row with drag-and-drop functionality
-const SortableRow = ({ criteria, index, onDelete }: {
+const SortableRow = ({ criteria, index, onDelete, showCodes }: {
   criteria: ExclusionCriteria | InclusionCriteria, 
   index: number,
-  onDelete: (index: number) => void
+  onDelete: (index: number) => void,
+  showCodes: boolean
 }) => {
   const {
     attributes,
@@ -81,6 +85,7 @@ const SortableRow = ({ criteria, index, onDelete }: {
             index={index} 
             onDelete={onDelete}
             dragHandleProps={{ attributes, listeners }}
+            showCodes={showCodes}
           />
         </CardContent>
       </Card>
@@ -92,12 +97,14 @@ const Row = ({
   criteria, 
   index, 
   onDelete,
-  dragHandleProps
+  dragHandleProps,
+  showCodes
 }: {
   criteria: ExclusionCriteria | InclusionCriteria, 
   index: number,
   onDelete: (index: number) => void,
-  dragHandleProps?: any
+  dragHandleProps?: any,
+  showCodes: boolean
 }) => {
   const isInclusion = 'inclusion_criteria_description' in criteria;
   const [pendingDelete, setPendingDelete] = useState<boolean>(false);
@@ -170,7 +177,7 @@ const Row = ({
       </div>
       
       <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-8">
+        <div className={showCodes ? "col-span-8" : "col-span-12"}>
           <div className="text-sm font-medium text-gray-700 mb-1">Name</div>
           <Input 
             value={name} 
@@ -179,15 +186,17 @@ const Row = ({
             className="font-mono text-sm"
           />
         </div>
-        <div className="col-span-4">
-          <div className="text-sm font-medium text-gray-700 mb-1">Code</div>
-          <Input 
-            value={code} 
-            onChange={onCodeChange}
-            placeholder="code"
-            className="font-mono text-sm"
-          />
-        </div>
+        {showCodes && (
+          <div className="col-span-4">
+            <div className="text-sm font-medium text-gray-700 mb-1">Code</div>
+            <Input 
+              value={code} 
+              onChange={onCodeChange}
+              placeholder="code"
+              className="font-mono text-sm"
+            />
+          </div>
+        )}
         <div className="col-span-12">
           <div className="text-sm font-medium text-gray-700 mb-1">Description</div>
           <Textarea 
@@ -240,6 +249,8 @@ const SelectC = () => {
     }
 
     const [rows, setRows] = useState<(ExclusionCriteria | InclusionCriteria)[]>([]);
+    const [useCodes, setUseCodes] = useState<boolean>(true);
+    
     useEffect(() => {
         if (jsonNL) {
             // Initialize code field if it doesn't exist
@@ -251,8 +262,24 @@ const SelectC = () => {
             });
             jsonNL.selection_criteria = updatedCriteria;
             setRows(updatedCriteria);
+            
+            // Initialize use_codes if it exists
+            if (jsonNL.use_codes !== undefined) {
+                setUseCodes(jsonNL.use_codes);
+            } else {
+                // Default to true if not specified
+                jsonNL.use_codes = true;
+            }
         }
     }, [jsonNL]);
+
+    // Handle the toggle for use_codes
+    const handleUseCodesToggle = (checked: boolean) => {
+        if (!jsonNL) return;
+        setUseCodes(checked);
+        jsonNL.use_codes = checked;
+        setModified(true);
+    };
 
     // Add keyboard shortcut for save
     useEffect(() => {
@@ -349,6 +376,7 @@ const SelectC = () => {
                                 criteria={criteria} 
                                 index={index} 
                                 onDelete={handleDelete}
+                                showCodes={useCodes}
                             />
                         ))}
                     </div>
@@ -369,6 +397,7 @@ const SelectC = () => {
                                         criteria={rows[activeId]} 
                                         index={activeId} 
                                         onDelete={handleDelete}
+                                        showCodes={useCodes}
                                     />
                                 </CardContent>
                             </Card>
@@ -381,7 +410,6 @@ const SelectC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
                     <Button 
                         variant="outline"
-                        className="flex items-center justify-center gap-2 border-2 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 p-6 rounded-lg shadow-sm transition-all duration-200 h-auto"
                         onClick={() => {
                             const new_rows = [...rows, {
                                 inclusion_criteria_description: '',
@@ -397,7 +425,6 @@ const SelectC = () => {
                     </Button>
                     <Button 
                         variant="outline"
-                        className="flex items-center justify-center gap-2 border-2 border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 p-6 rounded-lg shadow-sm transition-all duration-200 h-auto"
                         onClick={() => {
                             const new_rows = [...rows, {
                                 exclusion_criteria_description: '',
@@ -411,6 +438,27 @@ const SelectC = () => {
                         <Plus size={20} />
                         <span className="font-medium">Add Exclusion Criteria</span>
                     </Button>
+                </div>
+            )}
+            
+            {/* Use Codes Toggle */}
+            {jsonNL && (
+                <div className="mt-8 p-4 border rounded-lg bg-gray-50">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-lg font-medium text-gray-800">Use Codes</h3>
+                            <p className="text-sm text-gray-600">
+                                {useCodes 
+                                    ? "Codes will be used in the final decision." 
+                                    : "Codes will not be used in the final decision."}
+                            </p>
+                        </div>
+                        <Switch 
+                            checked={useCodes}
+                            onCheckedChange={handleUseCodesToggle}
+                            className="data-[state=checked]:bg-blue-600"
+                        />
+                    </div>
                 </div>
             )}
         </div>
