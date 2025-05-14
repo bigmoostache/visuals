@@ -60,6 +60,25 @@ const Txt = () => {
         setIsPreviewMode(!isPreviewMode);
     }
     
+    // Helper function to check if a URL is a YouTube link and extract video ID
+    const getYouTubeVideoId = (url) => {
+        // Match patterns like:
+        // https://www.youtube.com/watch?v=VIDEO_ID
+        // https://youtu.be/VIDEO_ID
+        // https://youtube.com/embed/VIDEO_ID
+        
+        const regexps = [
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\?\/]+)/i
+        ];
+        
+        for (const regex of regexps) {
+            const match = url.match(regex);
+            if (match) return match[1];
+        }
+        
+        return null;
+    };
+    
     return (
         <div className="w-screen h-screen overflow-hidden bg-gray-50">
             <div className="absolute top-3 right-4 flex items-center space-x-3 z-10">
@@ -107,7 +126,7 @@ const Txt = () => {
                         rehypePlugins={[rehypeKatex]}
                         components={{
                             // Professional heading hierarchy with refined typography
-                            h1: ({node, ...props}) => <h1 className="text-4xl font-bold mb-8 pb-4 border-b border-gray-200 text-gray-900 tracking-tight leading-tight font-serif" {...props} />,
+                            h1: ({node, ...props}) => <h1 className="text-4xl font-bold mb-8 pb-4 border-b border-gray-200 text-gray-900 tracking-tight leading-tight" {...props} />,
                             h2: ({node, ...props}) => <h2 className="text-3xl font-bold mt-14 mb-6 text-gray-800 tracking-tight leading-tight" {...props} />,
                             h3: ({node, ...props}) => <h3 className="text-2xl font-semibold mt-12 mb-5 text-gray-800 leading-snug" {...props} />,
                             h4: ({node, ...props}) => <h4 className="text-xl font-semibold mt-10 mb-4 text-gray-800 leading-snug" {...props} />,
@@ -117,8 +136,40 @@ const Txt = () => {
                             // Optimized paragraph spacing and readability
                             p: ({node, ...props}) => <p className="mb-6 text-base leading-7 text-gray-700 font-normal" {...props} />,
                             
-                            // Sophisticated yet subtle link styling
-                            a: ({node, ...props}) => <a className="text-indigo-600 font-medium border-b border-indigo-200 hover:border-indigo-600 hover:text-indigo-700 transition-all duration-200 ease-in-out" {...props} />,
+                            // Modified link handling - YouTube links become embeds, others remain as links
+                            a: ({node, href, children, ...props}) => {
+                                // Check if it's a YouTube link
+                                const videoId = href ? getYouTubeVideoId(href) : null;
+                                
+                                if (videoId) {
+                                    // It's a YouTube video, render an embed
+                                    return (
+                                        <div className="my-8">
+                                            <iframe 
+                                                width="100%" 
+                                                height="480"
+                                                src={`https://www.youtube.com/embed/${videoId}`}
+                                                title="YouTube video player"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                                className="rounded-lg shadow-lg"
+                                            ></iframe>
+                                        </div>
+                                    );
+                                } else {
+                                    // Regular link
+                                    return <a 
+                                        href={href} 
+                                        className="text-indigo-600 font-medium border-b border-indigo-200 hover:border-indigo-600 hover:text-indigo-700 transition-all duration-200 ease-in-out" 
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        {...props}
+                                    >
+                                        {children}
+                                    </a>;
+                                }
+                            },
                             
                             // Well-structured lists
                             ul: ({node, ...props}) => <ul className="mb-8 ml-6 list-disc text-gray-700 space-y-2" {...props} />,
