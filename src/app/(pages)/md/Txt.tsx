@@ -59,14 +59,24 @@ const Txt = () => {
     const toggleMode = () => {
         setIsPreviewMode(!isPreviewMode);
     }
+
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                onSubmit();
+            }
+        };
+        
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [text, onSubmit]);
     
     // Helper function to check if a URL is a YouTube link and extract video ID
-    const getYouTubeVideoId = (url) => {
-        // Match patterns like:
-        // https://www.youtube.com/watch?v=VIDEO_ID
-        // https://youtu.be/VIDEO_ID
-        // https://youtube.com/embed/VIDEO_ID
-        
+    const getYouTubeVideoId = (url: string) => {
         const regexps = [
             /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\?\/]+)/i
         ];
