@@ -7,7 +7,6 @@ import { Suspense } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import 'remark-github-blockquote-alert/alert.css'
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
@@ -203,11 +202,10 @@ const Txt = () => {
                                 // For code blocks, use SyntaxHighlighter with enhanced styling
                                 return <div className="my-8">
                                     <SyntaxHighlighter
-                                        style={atomDark}
+                                        style={atomDark as any}
                                         language={match ? match[1] : 'text'}
                                         className="rounded-md shadow-2xl"
                                         showLineNumbers={true}
-                                        {...props}
                                     >
                                         {String(children).replace(/\n$/, '')}
                                     </SyntaxHighlighter>
