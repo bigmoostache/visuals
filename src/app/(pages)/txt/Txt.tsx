@@ -4,6 +4,7 @@ import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
 import { useEffect, useState } from 'react'
 import { Suspense } from 'react'
+import useGetFileHead from '../(hooks)/useGetFileHead';
 
 const Txt = () => {
     // NO-CHANGE Retrieving URL
@@ -11,6 +12,9 @@ const Txt = () => {
     const url = searchParams.get('url')
     // NO-CHANGE Retrieving BLOB
     const { data } = useGetFile({fetchUrl: url as string})
+    const { data: head } = useGetFileHead({fetchUrl: url as string})
+    const editable = head ? head.editable : true;
+    console.log('editable', editable)
     // Local states, you may modify this for other types
     const [text, setText] = useState<string>('');
     const [updatable, setUpdatable] = useState<boolean>(false);
@@ -42,7 +46,7 @@ const Txt = () => {
 
     return (
         <div className="w-screen h-screen relative bg-white-200 overflow-hidden">
-            { updatable && 
+            { editable && updatable && 
             <div
                 onClick={onSubmit}
                 className='absolute top-2 right-4 px-2 py-1 bg-gray-200 text-gray-700 rounded-md cursor-pointer hover:bg-gray-400 transition-colors duration-300 ease-in-out text-sm'
@@ -71,6 +75,7 @@ const Txt = () => {
             <textarea 
             className='w-screen h-screen text-black bg-white p-2'
             value={text} 
+            readOnly={!editable}
             style={{ resize: 'none' }}
             onChange={(e) => {setText(e.target.value);setUpdatable(true);setUpdatableAgain(true)}}
             />

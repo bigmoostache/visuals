@@ -6,6 +6,9 @@ interface Props {
 }
 
 const useGetFile = ({ fetchUrl, onSucess }: Props) => {
+    // Check if the URL contains special_access_token
+    const includeCredentials = !fetchUrl.includes('file_special_access_token');
+    
     const {
         data,
         isLoading,
@@ -17,9 +20,9 @@ const useGetFile = ({ fetchUrl, onSucess }: Props) => {
         queryFn: async () => {
             const res = await fetch(fetchUrl, {
                 method: "GET",
-                credentials: "include", // This includes cookies in the request
+                credentials: includeCredentials ? "include" : "omit", // Only include credentials when needed
             });
-            
+           
             const blob = await res.blob();
             if (onSucess) {
                 onSucess();
@@ -27,7 +30,6 @@ const useGetFile = ({ fetchUrl, onSucess }: Props) => {
             return blob;
         },
     });
-
     return {
         data,
         isLoading,
