@@ -7,9 +7,10 @@ interface Props {
 
 
 
+
 export const get_is_doc_editable = (headers: Headers) => {
     const access = headers.get('Access');
-    if (!access || access !== 'WRITE') {
+    if (!access || !['PROP', 'ADMIN', 'WRITE'].includes(access)) {
         return false;
     }
     return true;

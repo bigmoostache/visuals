@@ -101,7 +101,6 @@ const Txt = () => {
     const { data } = useGetFile({fetchUrl: url as string})
     const { data: head } = useGetFileHead({fetchUrl: url as string})
     const editable = head ? head.editable : true;
-    console.log('editable', editable)
     // Local states, you may modify this for other types
     const [text, setText] = useState<string>('');
     const [updatable, setUpdatable] = useState<boolean>(false);
