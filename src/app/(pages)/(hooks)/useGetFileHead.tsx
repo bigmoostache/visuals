@@ -7,6 +7,7 @@ interface Props {
 
 
 
+
 export const get_is_doc_editable = (headers: Headers) => {
     const access = headers.get('Access');
     console.log('Access:', access);
