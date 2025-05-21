@@ -13,6 +13,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css'; // Add this in your _app.js or appropriate file
 import { remarkAlert } from 'remark-github-blockquote-alert'
+import useGetFileHead from '../(hooks)/useGetFileHead';
 
 const Txt = () => {
     // NO-CHANGE Retrieving URL
@@ -20,6 +21,9 @@ const Txt = () => {
     const url = searchParams.get('url')
     // NO-CHANGE Retrieving BLOB
     const { data } = useGetFile({fetchUrl: url as string})
+    const { data: head } = useGetFileHead({fetchUrl: url as string})
+    const editable = head ? head.editable : true;
+    console.log('editable', editable)
     // Local states, you may modify this for other types
     const [text, setText] = useState<string>('');
     const [updatable, setUpdatable] = useState<boolean>(false);
@@ -89,18 +93,18 @@ const Txt = () => {
     };
     
     return (
-        <div className="w-screen h-screen overflow-hidden bg-gray-50">
+        <div className="w-screen h-screen overflow-hidden">
             <div className="absolute top-3 right-4 flex items-center space-x-3 z-10">
                 {/* Mode toggle switch */}
-                <div 
+                {editable && <div 
                     onClick={toggleMode}
                     className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer hover:bg-indigo-700 transition-colors duration-300 ease-in-out text-sm font-medium shadow-sm"
                 >
                     {isPreviewMode ? 'Edit' : 'Preview'}
-                </div>
+                </div>}
                 
                 {/* Update button */}
-                {updatable &&
+                {editable && updatable &&
                 <div
                     onClick={onSubmit}
                     className='px-4 py-2 bg-emerald-600 text-white rounded-lg cursor-pointer hover:bg-emerald-700 transition-colors duration-300 ease-in-out text-sm font-medium shadow-sm flex items-center'
@@ -128,7 +132,7 @@ const Txt = () => {
             </div>
             
             {/* Conditional rendering based on mode */}
-            {isPreviewMode ? (
+            {(isPreviewMode || !editable) ? (
                 <div className="w-screen h-screen overflow-y-auto p-6 md:p-10 max-w-5xl mx-auto">
                     <ReactMarkdown
                         remarkPlugins={[remarkMath, remarkGfm, remarkAlert]}
