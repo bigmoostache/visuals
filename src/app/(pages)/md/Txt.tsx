@@ -7,13 +7,91 @@ import { Suspense } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import 'remark-github-blockquote-alert/alert.css'
+//import 'remark-github-blockquote-alert/alert.css'
+import './alerts.css'
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css'; // Add this in your _app.js or appropriate file
 import { remarkAlert } from 'remark-github-blockquote-alert'
 import useGetFileHead from '../(hooks)/useGetFileHead';
+import { markdownSnippets } from './markdownSnippets';
+import useUploadFile from '../(hooks)/useUploadFile';
+
+
+
+// Helper component for the markdown snippets panel
+type MarkdownSnippetProps = {
+    title: string;
+    snippet: string;
+    description: string;
+    onCopy: (snippet: string) => void;
+};
+
+const MarkdownSnippet = ({ title, snippet, description, onCopy }: MarkdownSnippetProps) => {
+    return (
+        <div className="p-4 border-b border-gray-200">
+            <div className="flex justify-between items-center mb-2">
+                <h3 className="font-medium text-gray-700">{title}</h3>
+                <button 
+                    onClick={() => onCopy(snippet)} 
+                    className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200 flex items-center"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Copy
+                </button>
+            </div>
+            
+            <div className="bg-gray-50 p-2 rounded font-mono text-sm text-gray-700 mb-3 whitespace-pre-wrap border border-gray-200">
+                {snippet}
+            </div>
+            
+            <div className="border p-3 rounded bg-white">
+                <ReactMarkdown
+                    remarkPlugins={[remarkMath, remarkGfm, remarkAlert]}
+                    rehypePlugins={[rehypeKatex]}
+                    components={{
+                        h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-2 text-gray-900" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-lg font-bold mb-2 text-gray-800" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-base font-semibold mb-1 text-gray-800" {...props} />,
+                        p: ({node, ...props}) => <p className="mb-2 text-sm text-gray-700" {...props} />,
+                        ul: ({node, ...props}) => <ul className="mb-2 ml-4 list-disc text-gray-700 text-sm" {...props} />,
+                        ol: ({node, ...props}) => <ol className="mb-2 ml-4 list-decimal text-gray-700 text-sm" {...props} />,
+                        li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                        code: ({className, children, ...props}) => {
+                            const match = /language-(\w+)/.exec(className || '');
+                            const isInlineCode = !match && !String(children).includes('\n');
+                            
+                            if (isInlineCode) {
+                                return <code className="bg-gray-100 px-1 text-gray-800 font-mono rounded text-sm" {...props}>{children}</code>;
+                            }
+                            
+                            return <div className="my-2">
+                                <SyntaxHighlighter
+                                    style={atomDark as any}
+                                    language={match ? match[1] : 'text'}
+                                    className="rounded-md text-xs"
+                                    showLineNumbers={false}
+                                >
+                                    {String(children).replace(/\n$/, '')}
+                                </SyntaxHighlighter>
+                            </div>
+                        },
+                        a: ({node, ...props}) => <a className="text-indigo-600 text-sm" {...props} />,
+                        img: ({node, ...props}) => <img className="max-w-full h-auto rounded text-sm" {...props} />,
+                        table: ({node, ...props}) => <div className="overflow-x-auto my-2 rounded border border-gray-200"><table className="min-w-full border-collapse text-sm" {...props} /></div>,
+                        blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-gray-300 pl-3 my-2 text-gray-600 text-sm" {...props} />,
+                    }}>
+                    {snippet}
+                </ReactMarkdown>
+            </div>
+            
+            <p className="text-xs text-gray-500 mt-2">{description}</p>
+        </div>
+    );
+};
 
 const Txt = () => {
     // NO-CHANGE Retrieving URL
@@ -29,6 +107,9 @@ const Txt = () => {
     const [updatable, setUpdatable] = useState<boolean>(false);
     const [updatableAgain, setUpdatableAgain] = useState<boolean>(false);
     const [isPreviewMode, setIsPreviewMode] = useState<boolean>(true); // Default to preview mode
+    
+    // Helper panel state
+    const [isHelperPanelOpen, setIsHelperPanelOpen] = useState<boolean>(false);
     
     // Local conversion blob -> local type
     useEffect(() => {
@@ -62,6 +143,26 @@ const Txt = () => {
     const toggleMode = () => {
         setIsPreviewMode(!isPreviewMode);
     }
+    
+    // Toggle helper panel
+    const toggleHelperPanel = () => {
+        setIsHelperPanelOpen(!isHelperPanelOpen);
+    }
+    
+    // Copy snippet to editor
+    const copySnippet = async (snippet: string) => {
+        try {
+            await navigator.clipboard.writeText(snippet);
+        } catch (err) {
+            // fallback: select and copy via execCommand (legacy)
+            const textarea = document.createElement('textarea');
+            textarea.value = snippet;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+    }
 
 
     useEffect(() => {
@@ -92,6 +193,10 @@ const Txt = () => {
         return null;
     };
     
+    // Uploader (for images)
+    const {mutate: upload} = useUploadFile(
+        {fetchUrl: url as string})
+
     return (
         <div className="w-screen h-screen overflow-hidden">
             <div className="absolute top-3 right-4 flex items-center space-x-3 z-10">
@@ -225,8 +330,22 @@ const Txt = () => {
                             th: ({node, ...props}) => <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200" {...props} />,
                             td: ({node, ...props}) => <td className="px-6 py-4 border-b border-gray-100 text-gray-700 align-top text-sm" {...props} />,
                             
-                            // Professional image display
-                            img: ({node, ...props}) => <img className="max-w-full h-auto rounded-lg my-10 mx-auto shadow-md" {...props} />,
+                            // Professional, adaptive image display
+                            img: ({node, ...props}) => (
+                                <div className="flex justify-center">
+                                    <img
+                                        className="rounded-lg shadow-md"
+                                        style={{
+                                            maxWidth: '100%',
+                                            height: 'auto',
+                                            maxHeight: '60vh',
+                                            objectFit: 'contain',
+                                            display: 'block'
+                                        }}
+                                        {...props}
+                                    />
+                                </div>
+                            ),
                             
                             // Typography refinements
                             strong: ({node, ...props}) => <strong className="font-semibold text-gray-900" {...props} />,
@@ -242,12 +361,89 @@ const Txt = () => {
                     </ReactMarkdown>
                 </div>
             ) : (
-                <textarea
-                    className='w-screen h-screen p-4 font-mono text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500'
-                    value={text}
-                    style={{ resize: 'none' }}
-                    onChange={(e) => {setText(e.target.value);setUpdatable(true);setUpdatableAgain(true)}}
-                />
+                <div className="w-screen h-screen flex">
+                    <textarea
+                        className={`h-full p-4 font-mono text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 ${isHelperPanelOpen ? 'w-2/3' : 'w-full'}`}
+                        value={text}
+                        style={{ resize: 'none' }}
+                        onChange={(e) => { setText(e.target.value); setUpdatable(true); setUpdatableAgain(true); }}
+                        onPaste={async (e) => {
+                            // Check for image in clipboard
+                            const items = e.clipboardData?.items;
+                            if (items) {
+                                for (let i = 0; i < items.length; i++) {
+                                    const item = items[i];
+                                    if (item.type.startsWith('image/')) {
+                                        e.preventDefault();
+                                        const file = item.getAsFile();
+                                        if (file) {
+                                            // Upload the image
+                                            upload(file, {
+                                                onSuccess: (result: any) => {
+                                                    console.log('Image upload result:', result);
+                                                    // Assume result.url is the uploaded image URL
+                                                    if (result?.url) {
+                                                        // Insert markdown image at cursor position
+                                                        const textarea = e.target as HTMLTextAreaElement;
+                                                        const before = text.slice(0, textarea.selectionStart);
+                                                        const after = text.slice(textarea.selectionEnd);
+                                                        const markdown = `![image](${result.url})`;
+                                                        const newText = before + markdown + after;
+                                                        setText(newText);
+                                                        setUpdatable(true);
+                                                        setUpdatableAgain(true);
+                                                    }
+                                                }
+                                            });
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }}
+                    />
+                                        
+                    {/* Helper panel toggle button */}
+                    {!isHelperPanelOpen && <div 
+                        className={`absolute ${isHelperPanelOpen ? 'right-80' : 'right-4'} top-16 z-20 bg-white p-2 rounded-l-lg shadow-md cursor-pointer hover:bg-gray-100 transition-all duration-300`}
+                        onClick={toggleHelperPanel}
+                        title={isHelperPanelOpen ? "Hide Markdown Help" : "Show Markdown Help"}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>}
+                    
+                    {/* Helper panel */}
+                    {isHelperPanelOpen && (
+                        <div className="h-full bg-white border-l border-gray-200 w-1/3 overflow-y-auto">
+                            <div className="p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+                                <h2 className="text-lg font-semibold text-gray-700">Markdown Cheatsheet</h2>
+                                <p className="text-sm text-gray-500">Click on the Copy button to add a snippet to your document</p>
+                            </div>
+                            <div 
+                                className="cursor-pointer text-gray-600 hover:text-gray-800 p-4 text-sm font-medium flex items-center justify-center border-b border-gray-200"
+                                onClick={toggleHelperPanel}
+                                title="Close Helper Panel"
+                            >
+                                Close Panel
+                            </div>
+                            
+                            {/* Markdown snippets */}
+                            <div className="divide-y divide-gray-100">
+                                {markdownSnippets.map((snippet, index) => (
+                                    <MarkdownSnippet 
+                                        key={index}
+                                        title={snippet.title}
+                                        snippet={snippet.snippet}
+                                        description={snippet.description}
+                                        onCopy={copySnippet}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
             )}
         </div>
     );
