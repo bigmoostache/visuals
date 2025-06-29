@@ -5,50 +5,462 @@ import usePatchFile from '../(hooks)/usePatchFile';
 import { useEffect, useState } from 'react'
 import { Suspense } from 'react'
 import { Button } from "@/components/ui/button"
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Save } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { on } from 'events';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface PossibleValue {
     value: number;
     definition: string;
-  }
-  
+}
+
 interface NotationCriteria {
-name: string;
-definition: string;
-possible_values: PossibleValue[];
+    name: string;
+    definition: string;
+    possible_values: PossibleValue[];
 }
 
 interface GridSection {
-name: string;
-rows: NotationCriteria[];
+    name: string;
+    rows: NotationCriteria[];
 }
 
 interface Grid {
     context?: string;
     rows: GridSection[];
-}  
+}
+
+// Sortable wrapper for possible values
+const SortablePossibleValue = ({ 
+    possibleValue, 
+    onDelete, 
+    onUpdate 
+}: { 
+    possibleValue: PossibleValue; 
+    onDelete: () => void;
+    onUpdate: (value: number, definition: string) => void;
+}) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: `value-${possibleValue.value}` });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className="group flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+        >
+            <div
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+            >
+                <GripVertical className="w-4 h-4" />
+            </div>
+            
+            <div className="flex items-center gap-3 flex-1">
+                <Input
+                    type="number"
+                    value={possibleValue.value}
+                    onChange={(e) => onUpdate(Number(e.target.value), possibleValue.definition)}
+                    className="w-20 text-center"
+                    min={0}
+                    max={100}
+                />
+                <Input
+                    value={possibleValue.definition}
+                    onChange={(e) => onUpdate(possibleValue.value, e.target.value)}
+                    placeholder="Enter definition..."
+                    className="flex-1"
+                />
+            </div>
+            
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDelete}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50"
+            >
+                <Trash2 className="w-4 h-4" />
+            </Button>
+        </div>
+    );
+};
+
+// Sortable wrapper for criteria
+const SortableNotationCriteria = ({ 
+    notationCriteria, 
+    onDelete, 
+    onUpdate,
+    setModified 
+}: { 
+    notationCriteria: NotationCriteria; 
+    onDelete: () => void;
+    onUpdate: (criteria: NotationCriteria) => void;
+    setModified: (modified: boolean) => void;
+}) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: `criteria-${notationCriteria.name}` });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    const [possibleValues, setPossibleValues] = useState(notationCriteria.possible_values);
+    const [newValue, setNewValue] = useState<number | null>(null);
+    const [newDefinition, setNewDefinition] = useState<string>("");
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = possibleValues.findIndex(val => `value-${val.value}` === active.id);
+            const newIndex = possibleValues.findIndex(val => `value-${val.value}` === over.id);
+            const newOrder = arrayMove(possibleValues, oldIndex, newIndex);
+            setPossibleValues(newOrder);
+            notationCriteria.possible_values = newOrder;
+            onUpdate(notationCriteria);
+            setModified(true);
+        }
+    };
+
+    const handleAddValue = () => {
+        if (newValue === null || newDefinition.trim() === "") return;
+        const newPossibleValue = { value: newValue, definition: newDefinition };
+        const updatedValues = [...possibleValues, newPossibleValue];
+        setPossibleValues(updatedValues);
+        notationCriteria.possible_values = updatedValues;
+        onUpdate(notationCriteria);
+        setModified(true);
+        setNewValue(null);
+        setNewDefinition("");
+    };
+
+    return (
+        <Card ref={setNodeRef} style={style} className="group">
+            <CardHeader className="pb-4">
+                <div className="flex items-start gap-3">
+                    <div
+                        {...attributes}
+                        {...listeners}
+                        className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 mt-1"
+                    >
+                        <GripVertical className="w-5 h-5" />
+                    </div>
+                    
+                    <div className="flex-1 space-y-3">
+                        <Input
+                            value={notationCriteria.name}
+                            onChange={(e) => {
+                                notationCriteria.name = e.target.value;
+                                onUpdate(notationCriteria);
+                                setModified(true);
+                            }}
+                            placeholder="Question name..."
+                            className="font-semibold text-lg"
+                        />
+                        <Textarea
+                            value={notationCriteria.definition}
+                            onChange={(e) => {
+                                notationCriteria.definition = e.target.value;
+                                onUpdate(notationCriteria);
+                                setModified(true);
+                            }}
+                            placeholder="Question description..."
+                            className="resize-none"
+                            rows={3}
+                        />
+                    </div>
+                    
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onDelete}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </Button>
+                </div>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+                <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-gray-700">Possible Values</h4>
+                    
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={possibleValues.map(val => `value-${val.value}`)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <div className="space-y-2">
+                                {possibleValues.map((possibleValue) => (
+                                    <SortablePossibleValue
+                                        key={possibleValue.value}
+                                        possibleValue={possibleValue}
+                                        onDelete={() => {
+                                            const updatedValues = possibleValues.filter(
+                                                (item) => item.value !== possibleValue.value
+                                            );
+                                            setPossibleValues(updatedValues);
+                                            notationCriteria.possible_values = updatedValues;
+                                            onUpdate(notationCriteria);
+                                            setModified(true);
+                                        }}
+                                        onUpdate={(value, definition) => {
+                                            const updatedValues = possibleValues.map(item =>
+                                                item.value === possibleValue.value
+                                                    ? { ...item, value, definition }
+                                                    : item
+                                            );
+                                            setPossibleValues(updatedValues);
+                                            notationCriteria.possible_values = updatedValues;
+                                            onUpdate(notationCriteria);
+                                            setModified(true);
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
+                    
+                    <div className="flex gap-2 p-3 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                        <Input
+                            type="number"
+                            placeholder="Value"
+                            value={newValue !== null ? newValue : ''}
+                            onChange={(e) => {
+                                const value = Number(e.target.value);
+                                if (value < 0 || value > 100) return;
+                                setNewValue(value);
+                            }}
+                            className="w-20 text-center"
+                            min={0}
+                            max={100}
+                        />
+                        <Input
+                            placeholder="Definition"
+                            value={newDefinition}
+                            onChange={(e) => setNewDefinition(e.target.value)}
+                            className="flex-1"
+                        />
+                        <Button
+                            onClick={handleAddValue}
+                            disabled={newValue === null || newDefinition.trim() === ""}
+                            size="sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+// Sortable wrapper for sections
+const SortableGridSection = ({ 
+    gridSection, 
+    onDelete, 
+    onUpdate,
+    setModified 
+}: { 
+    gridSection: GridSection; 
+    onDelete: () => void;
+    onUpdate: (section: GridSection) => void;
+    setModified: (modified: boolean) => void;
+}) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: `section-${gridSection.name}` });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    const [rows, setRows] = useState(gridSection.rows);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = rows.findIndex(row => `criteria-${row.name}` === active.id);
+            const newIndex = rows.findIndex(row => `criteria-${row.name}` === over.id);
+            const newOrder = arrayMove(rows, oldIndex, newIndex);
+            setRows(newOrder);
+            gridSection.rows = newOrder;
+            onUpdate(gridSection);
+            setModified(true);
+        }
+    };
+
+    return (
+        <Card ref={setNodeRef} style={style} className="group">
+            <CardHeader className="border-b bg-gray-50">
+                <div className="flex items-center gap-3">
+                    <div
+                        {...attributes}
+                        {...listeners}
+                        className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+                    >
+                        <GripVertical className="w-5 h-5" />
+                    </div>
+                    
+                    <Input
+                        value={gridSection.name}
+                        onChange={(e) => {
+                            if (e.target.value.match(/[^\w\s]/)) return;
+                            gridSection.name = e.target.value;
+                            onUpdate(gridSection);
+                            setModified(true);
+                        }}
+                        placeholder="Section name..."
+                        className="text-xl font-semibold border-none shadow-none bg-transparent"
+                    />
+                    
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onDelete}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </Button>
+                </div>
+            </CardHeader>
+            
+            <CardContent className="p-6 space-y-6">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                >
+                    <SortableContext
+                        items={rows.map(row => `criteria-${row.name}`)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        <div className="space-y-4">
+                            {rows.map((notationCriteria, index) => (
+                                <SortableNotationCriteria
+                                    key={index}
+                                    notationCriteria={notationCriteria}
+                                    onDelete={() => {
+                                        const updatedRows = rows.filter((_, i) => i !== index);
+                                        setRows(updatedRows);
+                                        gridSection.rows = updatedRows;
+                                        onUpdate(gridSection);
+                                        setModified(true);
+                                    }}
+                                    onUpdate={(criteria) => {
+                                        rows[index] = criteria;
+                                        onUpdate(gridSection);
+                                    }}
+                                    setModified={setModified}
+                                />
+                            ))}
+                        </div>
+                    </SortableContext>
+                </DndContext>
+                
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        const updatedRows = [...rows, { name: "", definition: "", possible_values: [] }];
+                        setRows(updatedRows);
+                        gridSection.rows = updatedRows;
+                        onUpdate(gridSection);
+                        setModified(true);
+                    }}
+                    className="w-full border-dashed border-2 border-gray-300 hover:border-gray-400"
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Question
+                </Button>
+            </CardContent>
+        </Card>
+    );
+};
 
 const GridC = () => {
-    // NO-CHANGE Retrieving URL
     const searchParams = useSearchParams()
     const url = searchParams.get('url')
-    const {mutate, isLoading, isSuccess} = usePatchFile({ fetchUrl: url as string });
+    const { mutate, isLoading, isSuccess } = usePatchFile({ fetchUrl: url as string });
+    
     useEffect(() => {
         if (isSuccess) {
             setModified(false);
         }
     }, [isSuccess]);
+
     const convertToBlob = (data: Grid) => {
-        const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
-        return new File([blob], 'filename.grid', {lastModified: Date.now(), type: blob.type});
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        return new File([blob], 'filename.grid', { lastModified: Date.now(), type: blob.type });
     }
-    // NO-CHANGE Retrieving BLOB
-    const { data } = useGetFile({fetchUrl: url as string})
-    // parse the json
+
+    const { data } = useGetFile({ fetchUrl: url as string })
     const [jsonNL, setJsonNL] = useState<Grid>();
+    
     useEffect(() => {
         if (!data) return;
         const reader = new FileReader();
@@ -57,194 +469,44 @@ const GridC = () => {
         }
         reader.readAsText(data);
     }, [data]);
+
     const [modified, setModified] = useState<boolean>(false);
+    const [context, setContext] = useState(jsonNL?.context);
+    const [gridSections, setGridSections] = useState<GridSection[]>([]);
+
+    useEffect(() => {
+        if (jsonNL) {
+            setContext(jsonNL.context);
+            setGridSections(jsonNL.rows);
+        }
+    }, [jsonNL]);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = gridSections.findIndex(section => `section-${section.name}` === active.id);
+            const newIndex = gridSections.findIndex(section => `section-${section.name}` === over.id);
+            const newOrder = arrayMove(gridSections, oldIndex, newIndex);
+            setGridSections(newOrder);
+            if (jsonNL) {
+                jsonNL.rows = newOrder;
+            }
+            setModified(true);
+        }
+    };
+
     const onSave = async () => {
         if (!jsonNL) return;
         mutate(convertToBlob(jsonNL));
     }
 
-    
-    const NotationCriteriaC = ({ notationCriteria }: { notationCriteria: NotationCriteria }) => {
-        const [possibleValues, setPossibleValues] = useState(notationCriteria.possible_values);
-    
-        const handleDelete = (valueToDelete: number) => {
-            const updatedValues = possibleValues.filter((item) => item.value !== valueToDelete);
-            setPossibleValues(updatedValues);
-            notationCriteria.possible_values = updatedValues;
-            setModified(true);
-        };
-        const [newValue, setNewValue] = useState<number | null>(null);
-        const [newDefinition, setNewDefinition] = useState<string>("");
-        const [questionName, setQuestionName] = useState<string>(notationCriteria.name);
-        const [questionDefinition, setQuestionDefinition] = useState<string>(notationCriteria.definition);
-    
-        return (
-            <div className="flex flex-rows m-2 bg-gray-100 rounded-xl p-2 shadow-md
-            ">
-                <div className="basis-1/4 text-left">
-                        <Input
-                            type="text"
-                            placeholder="Name"
-                            className='text-lg p-0 border-none shadow-none font-bold'
-                            value={questionName}
-                            onChange={(e) => {
-                                setQuestionName(e.target.value);
-                                notationCriteria.name = e.target.value;
-                                setModified(true);
-                            }}
-                        />
-                        <Textarea
-                            placeholder="Definition"
-                            rows = {5}
-                            className='text-sm p-0 border-none resize-none shadow-none w-full h-fit text-wrap'
-                            value={questionDefinition}
-                            onChange={(e) => {
-                                setQuestionDefinition(e.target.value);
-                                notationCriteria.definition = e.target.value;
-                                setModified(true);
-                            }}
-                        />
-                </div>
-                <ul className="basis-3/4 items-left">
-                    {possibleValues
-                        .sort((a, b) => a.value - b.value)
-                        .map((possibleValue) => (
-                            <li
-                                key={possibleValue.value}
-                                className="relative w-fit text-left bg-gray-200 mx-2 mb-2 p-2 rounded-lg pr-7 shadow-md"
-                            >
-                                {possibleValue.value}: {possibleValue.definition}
-                                <X
-                                    className="hover:text-red-500 cursor-pointer w-6 h-6 absolute right-0 top-0"
-                                    onClick={() => handleDelete(possibleValue.value)}
-                                />
-                            </li>
-                        ))}
-                    <li className="relative w-fit text-left bg-gray-200 mx-2 mb-2 p-1 rounded-lg pr-7 flex flex-rows shadow-md">
-                        <Input
-                            type="number"
-                            placeholder="Value"
-                            className="w-16"
-                            value={newValue !== null ? newValue : ''}
-                            onChange={(e) => {
-                                // if not parsable to int, return
-                                const value = Number(e.target.value);
-                                if (value < 0 || value > 100) {return;}
-                                setNewValue(value);
-                                setNewValue(Number(e.target.value));
-                            }}
-                        />
-                        <Input
-                            type="text"
-                            placeholder="Definition"
-                            className="w-64"
-                            value={newDefinition}
-                            onChange={(e) => setNewDefinition(e.target.value)}
-                        />
-                        <span
-                            className='cursor-pointer hover:text-blue-500  ml-2 my-1'
-                            onClick={() => {
-                                if (newValue === null) return;
-                                const updatedValues = [...possibleValues, {value: newValue, definition: newDefinition}];
-                                setPossibleValues(updatedValues);
-                                notationCriteria.possible_values = updatedValues;
-                                setModified(true);
-                                setNewValue(null);
-                                setNewDefinition("");
-                            }}
-                        >Create</span>
-                    </li>
-                </ul>
-            </div>
-        );
-    };
-    
-    const GridSectionC = ({ gridSection }: { gridSection: GridSection }) => {
-        const [sectionName, setSectionName] = useState(gridSection.name);
-        const [rows, setRows] = useState(gridSection.rows); // Use state to track rows
-        return (
-            <div className="border-2 border-black p-2 flex flex-cols m-2 rounded-xl border-gray-900 bg-gray-50 shadow-xl">
-                <Textarea
-                    placeholder="Section Name"
-                    className="text-lg p-0 p-1 resize-none border-none shadow-none font-bold basis-1/5"
-                    value={sectionName}
-                    onChange={(e) => {
-                        if (e.target.value.match(/[^\w\s]/)) return;
-                        if (e.target.value.match(/\n/)) return;
-                        setSectionName(e.target.value);
-                        gridSection.name = e.target.value;
-                        setModified(true);
-                    }}
-                />
-                <div className="basis-4/5 pt-6">
-                    {rows.map((notationCriteria, index) => (
-                        <div className="relative" key={notationCriteria.name}>
-                            <NotationCriteriaC notationCriteria={notationCriteria} />
-                            <X
-                                className="hover:text-red-500 text-gray-500 cursor-pointer w-6 h-6 absolute right-3 top-1"
-                                onClick={() => {
-                                    const updatedRows = rows.filter((_, i) => i !== index);
-                                    setRows(updatedRows); // Update the state
-                                    gridSection.rows = updatedRows;
-                                    setModified(true);
-                                }}
-                            />
-                        </div>
-                    ))}
-                    <div className='flex items-left px-2'>
-                    <Button
-                        onClick={() => {
-                            const updatedRows = [...rows, {name: "", definition: "", possible_values: []}];
-                            setRows(updatedRows); // Update the state
-                            gridSection.rows = updatedRows;
-                            setModified(true);
-                        }}
-                    >Add Question</Button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-    
-    const GridComponent = ({grid}: {grid: Grid}) => {
-        const [gridSections, setGridSections] = useState(grid.rows);
-
-        return (
-            <div>
-                {grid.rows.map((gridSection, index) => (
-                    <div key={index} className='relative'>
-                        <Trash2
-                            className="hover:text-red-500 cursor-pointer w-6 h-6 absolute right-3 top-1 text-gray-500"
-                            onClick={() => {
-                                const updatedSections = gridSections.filter((_, i) => i !== index);
-                                setGridSections(updatedSections);
-                                grid.rows = updatedSections;
-                                setModified(true);
-                            }}
-                        />
-                        <GridSectionC gridSection={gridSection}/>
-                    </div>
-                ))}
-                <div className='flex items-left px-2'>
-                <Button
-                    onClick={() => {
-                        const updatedSections = [...gridSections, {name: "", rows: []}];
-                        setGridSections(updatedSections);
-                        grid.rows = updatedSections;
-                        setModified(true);
-                    }}
-                >Add Section
-                </Button>
-                </div>
-            </div>
-        );
-    }
-    const [context, setContext] = useState(jsonNL?.context);
-    useEffect(() => {
-        if (jsonNL) {
-            setContext(jsonNL.context);
-        }
-    }, [jsonNL]);
     const updateContext = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (!jsonNL) return;
         jsonNL.context = e.target.value;
@@ -252,43 +514,111 @@ const GridC = () => {
         setModified(true);
     }
 
+    if (!jsonNL || !url) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-gray-500">Loading...</div>
+            </div>
+        );
+    }
+
     return (
-        <div className="w-screen h-screen relative overflow-y-auto text-center ">
-            {modified &&
-                <div className='p-2 flex justify-end'>
-                    <Button
-                        onClick={onSave}
-                        disabled={isLoading}
-                    >Save
-                    </Button>
-                </div>
-                    }
-            {jsonNL && url && (
-            <div>
-                <div className="p-4 flex flex-col items-start">
-                    <h1 className="text-2xl font-bold mb-2">Context</h1>
-                    <Textarea
-                        placeholder="Context"
-                        className='text-lg w-full p-4 border rounded shadow-sm min-h-32 resize-none rounded-lg'
-                        value={context}
-                        onChange={updateContext}
-                    />
-                </div>
-                <div className="p-2">
-                    <GridComponent grid={jsonNL} />
+        <div className="min-h-screen bg-gray-50">
+            {/* Header with save button */}
+            <div className="sticky top-0 bg-white border-b shadow-sm z-10">
+                <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+                    <h1 className="text-2xl font-bold text-gray-900">Grid Editor</h1>
+                    {modified && (
+                        <Button onClick={onSave} disabled={isLoading} className="gap-2">
+                            <Save className="w-4 h-4" />
+                            {isLoading ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    )}
                 </div>
             </div>
-            )}
+
+            <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+                {/* Context Section */}
+                <Card>
+                    <CardHeader>
+                        <h2 className="text-xl font-semibold">Context</h2>
+                        <p className="text-sm text-gray-600">
+                            Provide context or instructions for this grid
+                        </p>
+                    </CardHeader>
+                    <CardContent>
+                        <Textarea
+                            placeholder="Enter context or instructions..."
+                            value={context || ''}
+                            onChange={updateContext}
+                            className="min-h-32 resize-none"
+                        />
+                    </CardContent>
+                </Card>
+
+                {/* Grid Sections */}
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-semibold">Sections</h2>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                const updatedSections = [...gridSections, { name: "", rows: [] }];
+                                setGridSections(updatedSections);
+                                jsonNL.rows = updatedSections;
+                                setModified(true);
+                            }}
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Section
+                        </Button>
+                    </div>
+
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={gridSections.map(section => `section-${section.name}`)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <div className="space-y-6">
+                                {gridSections.map((gridSection, index) => (
+                                    <SortableGridSection
+                                        key={index}
+                                        gridSection={gridSection}
+                                        onDelete={() => {
+                                            const updatedSections = gridSections.filter((_, i) => i !== index);
+                                            setGridSections(updatedSections);
+                                            jsonNL.rows = updatedSections;
+                                            setModified(true);
+                                        }}
+                                        onUpdate={(section) => {
+                                            gridSections[index] = section;
+                                            setModified(true);
+                                        }}
+                                        setModified={setModified}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
+                </div>
+            </div>
         </div>
     );
 }
 
 const Grid = () => {
     return (
-      // You could have a loading skeleton as the `fallback` too
-      <Suspense>
-        <GridC />
-      </Suspense>
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-gray-500">Loading...</div>
+            </div>
+        }>
+            <GridC />
+        </Suspense>
     )
 }
 
