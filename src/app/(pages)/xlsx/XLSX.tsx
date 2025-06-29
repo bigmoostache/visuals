@@ -211,7 +211,7 @@ export default function XLSXPage() {
       case 'Backspace':
         e.preventDefault();
         // Clear cell content
-        handleCellChange(r, c, '');
+        // handleCellChange(r, c, '');
         return;
       default:
         // If it's a printable character, start editing with that character
@@ -236,6 +236,95 @@ export default function XLSXPage() {
         }
       }, 0);
     }
+  };
+
+  // Auto-size functionality - calculates optimal column widths and row heights
+  const autoSizeColumns = () => {
+    if (!sheetData.length) return;
+
+    // Create a temporary canvas to measure text dimensions accurately
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.font = '12px Arial'; // Match cell font exactly
+    
+    const newColWidths = [...colWidths];
+    const newRowHeights = [...rowHeights];
+    
+    const minColWidth = 60;
+    const maxColWidth = 300;
+    const minRowHeight = 24;
+    const maxRowHeight = 200;
+    const padding = 16; // Account for cell padding
+
+    // Step 1: Calculate optimal column widths based on content
+    for (let c = 0; c < sheetData[0]?.length || 0; c++) {
+      let maxWidth = minColWidth;
+      
+      // Check header width if using first row as header
+      if (useFirstRowAsHeader && sheetData[0]) {
+        const headerText = String(sheetData[0][c] || '');
+        const headerWidth = ctx.measureText(headerText).width + padding;
+        maxWidth = Math.max(maxWidth, headerWidth);
+      }
+      
+      // Check all data rows for maximum content width
+      const dataRows = useFirstRowAsHeader ? sheetData.slice(1) : sheetData;
+      for (let r = 0; r < dataRows.length; r++) {
+        const cellText = String(dataRows[r][c] || '');
+        // For long text, we'll let it wrap, so don't make columns too wide
+        const singleLineWidth = ctx.measureText(cellText).width + padding;
+        const reasonableWidth = Math.min(singleLineWidth, maxColWidth * 0.8);
+        maxWidth = Math.max(maxWidth, reasonableWidth);
+      }
+      
+      newColWidths[c] = Math.min(maxWidth, maxColWidth);
+    }
+
+    // Step 2: Calculate optimal row heights considering text wrapping
+    const dataRows = useFirstRowAsHeader ? sheetData.slice(1) : sheetData;
+    for (let r = 0; r < dataRows.length; r++) {
+      const actualRowIndex = useFirstRowAsHeader ? r + 1 : r;
+      let maxHeight = minRowHeight;
+      
+      for (let c = 0; c < dataRows[r].length; c++) {
+        const cellText = String(dataRows[r][c] || '');
+        const colWidth = newColWidths[c] - padding;
+        
+        if (cellText.length > 0) {
+          // Simulate text wrapping to calculate height
+          const words = cellText.split(/\s+/);
+          let lines = 1;
+          let currentLineWidth = 0;
+          
+          for (const word of words) {
+            const wordWidth = ctx.measureText(word + ' ').width;
+            
+            if (currentLineWidth + wordWidth > colWidth && currentLineWidth > 0) {
+              lines++;
+              currentLineWidth = wordWidth;
+            } else {
+              currentLineWidth += wordWidth;
+            }
+          }
+          
+          // Also account for explicit line breaks
+          const explicitLines = cellText.split('\n').length;
+          lines = Math.max(lines, explicitLines);
+          
+          const lineHeight = 16; // Approximate line height for 12px font
+          const estimatedHeight = lines * lineHeight + 12; // Add padding
+          maxHeight = Math.max(maxHeight, estimatedHeight);
+        }
+      }
+      
+      newRowHeights[actualRowIndex] = Math.min(maxHeight, maxRowHeight);
+    }
+
+    // Apply the calculated dimensions
+    setColWidths(newColWidths);
+    setRowHeights(newRowHeights);
   };
 
   const saveFile = () => {
@@ -367,7 +456,6 @@ export default function XLSXPage() {
               width: colWidths[c],
               minWidth: colWidths[c],
               maxWidth: colWidths[c],
-              overflow: 'hidden',
               wordWrap: 'break-word',
               padding: '4px',
               border: '1px solid #ccc',
@@ -416,13 +504,16 @@ export default function XLSXPage() {
                       width: '100%',
                       height: '100%',
                       fontSize: '12px',
-                      lineHeight: '1.2',
+                      lineHeight: '1.3',
                       overflow: 'hidden',
                       wordBreak: 'break-word',
-                      whiteSpace: 'pre-wrap'
+                      whiteSpace: 'normal',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      padding: '2px'
                     }}
                   >
-                    {cell || ''}
+                    {cell}
                   </div>
                 )}
               </td>
@@ -439,6 +530,9 @@ export default function XLSXPage() {
       <div className="p-2 border-b border-gray-300 flex items-center gap-2 bg-gray-100">
         <Button onClick={saveFile} disabled={isLoading}>
           {isLoading ? 'Saving...' : isSuccess ? 'Saved!' : 'Save'}
+        </Button>
+        <Button onClick={autoSizeColumns} variant="outline">
+          📏 Auto-size & Wrap
         </Button>
         <label className="flex items-center gap-2 ml-4">
           <input
