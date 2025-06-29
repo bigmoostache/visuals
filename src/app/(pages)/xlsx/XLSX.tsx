@@ -6,9 +6,6 @@ import usePatchFile from '../(hooks)/usePatchFile';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 
-// Removed imports for Input, Switch, Textarea, Card, Label as not needed now
-// (We keep Button for saving and a simple checkbox for 'Use first row')
-
 // Utility to convert number to Excel-like column name: 0 -> A, 1 -> B, ...
 function columnName(n: number) {
   let str = "";
@@ -24,24 +21,29 @@ export default function XLSXPage() {
   const url = searchParams.get('url');
   const { data } = useGetFile({fetchUrl: url as string});
   const { mutate, isLoading, isSuccess } = usePatchFile({fetchUrl: url as string});
-
+  
   const [workbook, setWorkbook] = useState<XLSX.WorkBook>();
   const [sheetNames, setSheetNames] = useState<string[]>([]);
   const [currentSheet, setCurrentSheet] = useState<string>('');
   const [sheetData, setSheetData] = useState<(string|number)[][]>([]);
+  
+  // Selection and editing state
   const [selectedCell, setSelectedCell] = useState<{r: number; c: number} | null>(null);
-
+  const [editingCell, setEditingCell] = useState<{r: number; c: number} | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
+  
   // For resizing
   const [colWidths, setColWidths] = useState<number[]>([]);
   const [rowHeights, setRowHeights] = useState<number[]>([]);
-
+  
   // By default, checked
   const [useFirstRowAsHeader, setUseFirstRowAsHeader] = useState(true);
-
+  
   const tableRef = useRef<HTMLDivElement>(null);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const resizingColRef = useRef<{index: number; startX: number; startWidth: number} | null>(null);
   const resizingRowRef = useRef<{index: number; startY: number; startHeight: number} | null>(null);
-
+  
   const rowHeaderWidth = 50; // Fixed width for row header
 
   useEffect(() => {
@@ -61,6 +63,7 @@ export default function XLSXPage() {
     if (!workbook || !currentSheet) return;
     const ws = workbook.Sheets[currentSheet];
     if (!ws) return;
+    
     // Convert to array
     const range = XLSX.utils.decode_range(ws['!ref'] || "A1");
     const rows = [];
@@ -74,7 +77,7 @@ export default function XLSXPage() {
       rows.push(row);
     }
     setSheetData(rows);
-
+    
     const defaultColWidth = 100;
     const defaultRowHeight = 24;
     const newColWidths = new Array((rows[0]||[]).length).fill(defaultColWidth);
@@ -87,31 +90,63 @@ export default function XLSXPage() {
     loadCurrentSheet();
   }, [workbook, currentSheet]);
 
-  // Removed the effect that recalculated rowHeights after sheetData changes.
-  // This prevents changing cell content from altering the row heights automatically.
+  // Focus textarea when editing starts
+  useEffect(() => {
+    if (editingCell && editTextareaRef.current) {
+      editTextareaRef.current.focus();
+      editTextareaRef.current.select();
+    }
+  }, [editingCell]);
 
   const handleCellClick = (r: number, c: number) => {
     setSelectedCell({r, c});
   };
 
-  const handleCellChange = (r: number, c: number, value: string) => {
-    if (!workbook || !currentSheet) return;
+  const handleCellDoubleClick = (r: number, c: number) => {
+    setEditingCell({r, c});
+    setEditValue(String(sheetData[r][c] || ''));
+  };
+
+  const commitEdit = () => {
+    if (!editingCell || !workbook || !currentSheet) return;
+    
+    const { r, c } = editingCell;
     const ws = workbook.Sheets[currentSheet];
-    const cell_addr = XLSX.utils.encode_cell({r,c});
+    const cell_addr = XLSX.utils.encode_cell({r, c});
+    
     if (!ws[cell_addr]) {
-      ws[cell_addr] = { t: 's', v: value };
+      ws[cell_addr] = { t: 's', v: editValue };
     } else {
-      ws[cell_addr].v = value;
-      if (!isNaN(Number(value)) && value.trim() !== '') {
+      ws[cell_addr].v = editValue;
+      if (!isNaN(Number(editValue)) && editValue.trim() !== '') {
         ws[cell_addr].t = 'n';
-        ws[cell_addr].v = Number(value);
+        ws[cell_addr].v = Number(editValue);
       } else {
         ws[cell_addr].t = 's';
       }
     }
+    
     const newData = [...sheetData];
-    newData[r][c] = value;
+    newData[r][c] = editValue;
     setSheetData(newData);
+    
+    setEditingCell(null);
+    setEditValue('');
+  };
+
+  const cancelEdit = () => {
+    setEditingCell(null);
+    setEditValue('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      commitEdit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelEdit();
+    }
   };
 
   const saveFile = () => {
@@ -122,14 +157,14 @@ export default function XLSXPage() {
   }
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault();
         saveFile();
       }
     }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [workbook]);
 
   // Column resizing
@@ -143,6 +178,7 @@ export default function XLSXPage() {
     document.addEventListener('mousemove', onColMouseMove);
     document.addEventListener('mouseup', onColMouseUp);
   };
+
   const onColMouseMove = (e: MouseEvent) => {
     if (!resizingColRef.current) return;
     const delta = e.clientX - resizingColRef.current.startX;
@@ -151,6 +187,7 @@ export default function XLSXPage() {
     newColWidths[resizingColRef.current.index] = newWidth;
     setColWidths(newColWidths);
   };
+
   const onColMouseUp = (e: MouseEvent) => {
     document.removeEventListener('mousemove', onColMouseMove);
     document.removeEventListener('mouseup', onColMouseUp);
@@ -168,6 +205,7 @@ export default function XLSXPage() {
     document.addEventListener('mousemove', onRowMouseMove);
     document.addEventListener('mouseup', onRowMouseUp);
   };
+
   const onRowMouseMove = (e: MouseEvent) => {
     if (!resizingRowRef.current) return;
     const delta = e.clientY - resizingRowRef.current.startY;
@@ -176,6 +214,7 @@ export default function XLSXPage() {
     newRowHeights[resizingRowRef.current.index] = newHeight;
     setRowHeights(newRowHeights);
   };
+
   const onRowMouseUp = (e: MouseEvent) => {
     document.removeEventListener('mousemove', onRowMouseMove);
     document.removeEventListener('mouseup', onRowMouseUp);
@@ -190,8 +229,8 @@ export default function XLSXPage() {
         <tr style={{height: 24}}>
           <th style={{width:rowHeaderWidth, background:'#eee', minWidth: rowHeaderWidth}}></th>
           {colWidths.map((w, colIndex) => (
-            <th 
-            key={colIndex} 
+            <th
+            key={colIndex}
             style={{position:'relative', background:'#eee', width:w, minWidth:w, fontSize:'14px', lineHeight:'1.2', padding:'5px 10px'}}
             >
               {sheetData[0][colIndex]}
@@ -237,39 +276,69 @@ export default function XLSXPage() {
             ></div>
           </th>
           {row.map((cell, c) => {
-            let cellHeight = rowHeights[actualRowIndex] || 24;
+            const cellHeight = rowHeights[actualRowIndex] || 24;
+            const isSelected = selectedCell?.r === actualRowIndex && selectedCell?.c === c;
+            const isEditing = editingCell?.r === actualRowIndex && editingCell?.c === c;
+            
             let cellStyle: React.CSSProperties = {
               width: colWidths[c],
               minWidth: colWidths[c],
               maxWidth: colWidths[c],
-              overflow:'hidden', // fixed: prevent cell from resizing automatically
-              wordWrap:'break-word',
-              padding:'4px',
-              border:'1px solid #ccc',
-              display:'table-cell',
-              verticalAlign:'top',
-              height: cellHeight // ensure td has a fixed height
+              overflow: 'hidden',
+              wordWrap: 'break-word',
+              padding: '4px',
+              border: '1px solid #ccc',
+              display: 'table-cell',
+              verticalAlign: 'top',
+              height: cellHeight,
+              position: 'relative',
+              backgroundColor: isSelected ? '#e3f2fd' : 'white',
+              cursor: 'cell'
             };
+            
             return (
-              <td key={c} 
-                onClick={() => handleCellClick(actualRowIndex,c)} 
-                style={cellStyle}>
-                <textarea
-                  style={{
-                    width:'100%',
-                    height:'100%',
-                    resize:'none',
-                    boxSizing:'border-box',
-                    background:'transparent',
-                    border:'none',
-                    overflow:'auto',
-                    display:'block',
-                    fontSize:'12px',
-                    lineHeight:'1.2',
-                  }}
-                  value={cell || ''}
-                  onChange={(e)=>handleCellChange(actualRowIndex,c,e.target.value)}
-                />
+              <td 
+                key={c}
+                onClick={() => handleCellClick(actualRowIndex, c)}
+                onDoubleClick={() => handleCellDoubleClick(actualRowIndex, c)}
+                style={cellStyle}
+              >
+                {isEditing ? (
+                  <textarea
+                    ref={editTextareaRef}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      resize: 'none',
+                      boxSizing: 'border-box',
+                      background: 'white',
+                      border: '2px solid #2196f3',
+                      overflow: 'auto',
+                      display: 'block',
+                      fontSize: '12px',
+                      lineHeight: '1.2',
+                      padding: '2px',
+                    }}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onBlur={commitEdit}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      fontSize: '12px',
+                      lineHeight: '1.2',
+                      overflow: 'hidden',
+                      wordBreak: 'break-word',
+                      whiteSpace: 'pre-wrap'
+                    }}
+                  >
+                    {cell || ''}
+                  </div>
+                )}
               </td>
             );
           })}
@@ -280,7 +349,7 @@ export default function XLSXPage() {
 
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden">
-      {/* Top toolbar (removed text styling, only keep save and checkbox) */}
+      {/* Top toolbar */}
       <div className="p-2 border-b border-gray-300 flex items-center gap-2 bg-gray-100">
         <Button onClick={saveFile} disabled={isLoading}>
           {isLoading ? 'Saving...' : isSuccess ? 'Saved!' : 'Save'}
@@ -294,9 +363,8 @@ export default function XLSXPage() {
           Use first row as column titles
         </label>
       </div>
-
+      
       {/* Main table container */}
-      {/* Combine headers and table into one single table to remove extra space */}
       <div className="flex-1 overflow-auto" ref={tableRef} style={{position:'relative'}}>
         <table style={{borderCollapse:'collapse', tableLayout:'fixed', width:'max-content'}}>
           <thead style={{position:'sticky', top:0, background:'#f5f5f5', zIndex:2}}>
@@ -307,13 +375,13 @@ export default function XLSXPage() {
           </tbody>
         </table>
       </div>
-
+      
       {/* Bottom sheet selector */}
       <div className="p-2 border-t border-gray-300 flex justify-start bg-gray-100">
         {sheetNames.map(sn => (
-          <Button 
-            key={sn} 
-            variant={sn===currentSheet?'default':'outline'} 
+          <Button
+            key={sn}
+            variant={sn===currentSheet?'default':'outline'}
             onClick={()=>setCurrentSheet(sn)}
             className="mx-1"
           >
