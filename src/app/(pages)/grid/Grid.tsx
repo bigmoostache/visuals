@@ -2,10 +2,10 @@
 import { useSearchParams } from 'next/navigation'
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { Suspense } from 'react'
 import { Button } from "@/components/ui/button"
-import { Plus, Trash2, GripVertical, Save } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Save, ChevronDown, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -49,6 +49,26 @@ interface Grid {
     context?: string;
     rows: GridSection[];
 }
+
+// Auto-resizing textarea hook
+const useAutoResize = (value: string) => {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${Math.max(textarea.scrollHeight, 80)}px`;
+        }
+    }, [value]);
+
+    return textareaRef;
+};
+
+// Generate stable IDs for sections
+const generateSectionId = (section: GridSection, index: number) => {
+    return section.name ? `section-${section.name}-${index}` : `section-empty-${index}`;
+};
 
 // Sortable wrapper for possible values
 const SortablePossibleValue = ({ 
@@ -121,15 +141,18 @@ const SortablePossibleValue = ({
 // Sortable wrapper for criteria
 const SortableNotationCriteria = ({ 
     notationCriteria, 
+    criteriaIndex,
     onDelete, 
     onUpdate,
     setModified 
 }: { 
     notationCriteria: NotationCriteria; 
+    criteriaIndex: number;
     onDelete: () => void;
     onUpdate: (criteria: NotationCriteria) => void;
     setModified: (modified: boolean) => void;
 }) => {
+    const criteriaId = `criteria-${notationCriteria.name}-${criteriaIndex}`;
     const {
         attributes,
         listeners,
@@ -137,7 +160,7 @@ const SortableNotationCriteria = ({
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: `criteria-${notationCriteria.name}` });
+    } = useSortable({ id: criteriaId });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -148,6 +171,7 @@ const SortableNotationCriteria = ({
     const [possibleValues, setPossibleValues] = useState(notationCriteria.possible_values);
     const [newValue, setNewValue] = useState<number | null>(null);
     const [newDefinition, setNewDefinition] = useState<string>("");
+    const definitionRef = useAutoResize(notationCriteria.definition);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -205,6 +229,7 @@ const SortableNotationCriteria = ({
                             className="font-semibold text-lg"
                         />
                         <Textarea
+                            ref={definitionRef}
                             value={notationCriteria.definition}
                             onChange={(e) => {
                                 notationCriteria.definition = e.target.value;
@@ -212,8 +237,7 @@ const SortableNotationCriteria = ({
                                 setModified(true);
                             }}
                             placeholder="Question description..."
-                            className="resize-none"
-                            rows={3}
+                            className="resize-none min-h-[80px]"
                         />
                     </div>
                     
@@ -309,15 +333,22 @@ const SortableNotationCriteria = ({
 // Sortable wrapper for sections
 const SortableGridSection = ({ 
     gridSection, 
+    sectionIndex,
     onDelete, 
     onUpdate,
-    setModified 
+    setModified,
+    isCollapsed,
+    onToggleCollapse
 }: { 
     gridSection: GridSection; 
+    sectionIndex: number;
     onDelete: () => void;
     onUpdate: (section: GridSection) => void;
     setModified: (modified: boolean) => void;
+    isCollapsed: boolean;
+    onToggleCollapse: () => void;
 }) => {
+    const sectionId = generateSectionId(gridSection, sectionIndex);
     const {
         attributes,
         listeners,
@@ -325,7 +356,7 @@ const SortableGridSection = ({
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: `section-${gridSection.name}` });
+    } = useSortable({ id: sectionId });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -334,6 +365,11 @@ const SortableGridSection = ({
     };
 
     const [rows, setRows] = useState(gridSection.rows);
+
+    // Sync rows with gridSection.rows when it changes
+    useEffect(() => {
+        setRows(gridSection.rows);
+    }, [gridSection.rows]);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -345,13 +381,27 @@ const SortableGridSection = ({
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (over && active.id !== over.id) {
-            const oldIndex = rows.findIndex(row => `criteria-${row.name}` === active.id);
-            const newIndex = rows.findIndex(row => `criteria-${row.name}` === over.id);
-            const newOrder = arrayMove(rows, oldIndex, newIndex);
-            setRows(newOrder);
-            gridSection.rows = newOrder;
-            onUpdate(gridSection);
-            setModified(true);
+            // Find indices by checking if the active/over id matches the pattern
+            let oldIndex = -1;
+            let newIndex = -1;
+            
+            rows.forEach((row, idx) => {
+                const criteriaId = `criteria-${row.name}-${idx}`;
+                if (active.id.toString().startsWith(`criteria-${row.name}`)) {
+                    oldIndex = idx;
+                }
+                if (over.id.toString().startsWith(`criteria-${row.name}`)) {
+                    newIndex = idx;
+                }
+            });
+            
+            if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+                const newOrder = arrayMove(rows, oldIndex, newIndex);
+                setRows(newOrder);
+                gridSection.rows = newOrder;
+                onUpdate(gridSection);
+                setModified(true);
+            }
         }
     };
 
@@ -366,6 +416,19 @@ const SortableGridSection = ({
                     >
                         <GripVertical className="w-5 h-5" />
                     </div>
+                    
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onToggleCollapse}
+                        className="p-1"
+                    >
+                        {isCollapsed ? (
+                            <ChevronRight className="w-4 h-4" />
+                        ) : (
+                            <ChevronDown className="w-4 h-4" />
+                        )}
+                    </Button>
                     
                     <Input
                         value={gridSection.name}
@@ -390,54 +453,60 @@ const SortableGridSection = ({
                 </div>
             </CardHeader>
             
-            <CardContent className="p-6 space-y-6">
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                >
-                    <SortableContext
-                        items={rows.map(row => `criteria-${row.name}`)}
-                        strategy={verticalListSortingStrategy}
+            {!isCollapsed && (
+                <CardContent className="p-6 space-y-6">
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
                     >
-                        <div className="space-y-4">
-                            {rows.map((notationCriteria, index) => (
-                                <SortableNotationCriteria
-                                    key={index}
-                                    notationCriteria={notationCriteria}
-                                    onDelete={() => {
-                                        const updatedRows = rows.filter((_, i) => i !== index);
-                                        setRows(updatedRows);
-                                        gridSection.rows = updatedRows;
-                                        onUpdate(gridSection);
-                                        setModified(true);
-                                    }}
-                                    onUpdate={(criteria) => {
-                                        rows[index] = criteria;
-                                        onUpdate(gridSection);
-                                    }}
-                                    setModified={setModified}
-                                />
-                            ))}
-                        </div>
-                    </SortableContext>
-                </DndContext>
-                
-                <Button
-                    variant="outline"
-                    onClick={() => {
-                        const updatedRows = [...rows, { name: "", definition: "", possible_values: [] }];
-                        setRows(updatedRows);
-                        gridSection.rows = updatedRows;
-                        onUpdate(gridSection);
-                        setModified(true);
-                    }}
-                    className="w-full border-dashed border-2 border-gray-300 hover:border-gray-400"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Question
-                </Button>
-            </CardContent>
+                        <SortableContext
+                            items={rows.map((row, idx) => `criteria-${row.name}-${idx}`)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <div className="space-y-4">
+                                {rows.map((notationCriteria, index) => (
+                                    <SortableNotationCriteria
+                                        key={`criteria-${notationCriteria.name}-${index}`}
+                                        notationCriteria={notationCriteria}
+                                        criteriaIndex={index}
+                                        onDelete={() => {
+                                            const updatedRows = rows.filter((_, i) => i !== index);
+                                            setRows(updatedRows);
+                                            gridSection.rows = updatedRows;
+                                            onUpdate(gridSection);
+                                            setModified(true);
+                                        }}
+                                        onUpdate={(criteria) => {
+                                            const updatedRows = [...rows];
+                                            updatedRows[index] = criteria;
+                                            setRows(updatedRows);
+                                            gridSection.rows = updatedRows;
+                                            onUpdate(gridSection);
+                                        }}
+                                        setModified={setModified}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
+                    
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            const updatedRows = [...rows, { name: "", definition: "", possible_values: [] }];
+                            setRows(updatedRows);
+                            gridSection.rows = updatedRows;
+                            onUpdate(gridSection);
+                            setModified(true);
+                        }}
+                        className="w-full border-dashed border-2 border-gray-300 hover:border-gray-400"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Question
+                    </Button>
+                </CardContent>
+            )}
         </Card>
     );
 };
@@ -471,15 +540,33 @@ const GridC = () => {
     }, [data]);
 
     const [modified, setModified] = useState<boolean>(false);
-    const [context, setContext] = useState(jsonNL?.context);
+    const [context, setContext] = useState(jsonNL?.context || '');
     const [gridSections, setGridSections] = useState<GridSection[]>([]);
+    const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+    
+    const contextRef = useAutoResize(context);
 
     useEffect(() => {
         if (jsonNL) {
-            setContext(jsonNL.context);
-            setGridSections(jsonNL.rows);
+            setContext(jsonNL.context || '');
+            setGridSections([...jsonNL.rows]); // Create new array to force re-render
         }
     }, [jsonNL]);
+
+    // Keyboard shortcut for save
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === 's') {
+                event.preventDefault();
+                if (modified && jsonNL) {
+                    onSave();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [modified, jsonNL]);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -491,21 +578,28 @@ const GridC = () => {
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (over && active.id !== over.id) {
-            const oldIndex = gridSections.findIndex(section => `section-${section.name}` === active.id);
-            const newIndex = gridSections.findIndex(section => `section-${section.name}` === over.id);
-            const newOrder = arrayMove(gridSections, oldIndex, newIndex);
-            setGridSections(newOrder);
-            if (jsonNL) {
-                jsonNL.rows = newOrder;
+            const oldIndex = gridSections.findIndex((section, idx) => 
+                generateSectionId(section, idx) === active.id
+            );
+            const newIndex = gridSections.findIndex((section, idx) => 
+                generateSectionId(section, idx) === over.id
+            );
+            
+            if (oldIndex !== -1 && newIndex !== -1) {
+                const newOrder = arrayMove(gridSections, oldIndex, newIndex);
+                setGridSections([...newOrder]); // Force re-render with new array
+                if (jsonNL) {
+                    jsonNL.rows = newOrder;
+                }
+                setModified(true);
             }
-            setModified(true);
         }
     };
 
-    const onSave = async () => {
+    const onSave = useCallback(async () => {
         if (!jsonNL) return;
         mutate(convertToBlob(jsonNL));
-    }
+    }, [jsonNL, mutate]);
 
     const updateContext = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (!jsonNL) return;
@@ -513,6 +607,17 @@ const GridC = () => {
         setContext(e.target.value);
         setModified(true);
     }
+
+    const toggleSectionCollapse = (sectionIndex: number) => {
+        const sectionId = generateSectionId(gridSections[sectionIndex], sectionIndex);
+        const newCollapsed = new Set(collapsedSections);
+        if (newCollapsed.has(sectionId)) {
+            newCollapsed.delete(sectionId);
+        } else {
+            newCollapsed.add(sectionId);
+        }
+        setCollapsedSections(newCollapsed);
+    };
 
     if (!jsonNL || !url) {
         return (
@@ -531,7 +636,7 @@ const GridC = () => {
                     {modified && (
                         <Button onClick={onSave} disabled={isLoading} className="gap-2">
                             <Save className="w-4 h-4" />
-                            {isLoading ? 'Saving...' : 'Save Changes'}
+                            {isLoading ? 'Saving...' : 'Save Changes (Ctrl+S)'}
                         </Button>
                     )}
                 </div>
@@ -548,10 +653,11 @@ const GridC = () => {
                     </CardHeader>
                     <CardContent>
                         <Textarea
+                            ref={contextRef}
                             placeholder="Enter context or instructions..."
-                            value={context || ''}
+                            value={context}
                             onChange={updateContext}
-                            className="min-h-32 resize-none"
+                            className="resize-none min-h-[80px]"
                         />
                     </CardContent>
                 </Card>
@@ -565,7 +671,9 @@ const GridC = () => {
                             onClick={() => {
                                 const updatedSections = [...gridSections, { name: "", rows: [] }];
                                 setGridSections(updatedSections);
-                                jsonNL.rows = updatedSections;
+                                if (jsonNL) {
+                                    jsonNL.rows = updatedSections;
+                                }
                                 setModified(true);
                             }}
                         >
@@ -580,27 +688,40 @@ const GridC = () => {
                         onDragEnd={handleDragEnd}
                     >
                         <SortableContext
-                            items={gridSections.map(section => `section-${section.name}`)}
+                            items={gridSections.map((section, idx) => generateSectionId(section, idx))}
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="space-y-6">
-                                {gridSections.map((gridSection, index) => (
-                                    <SortableGridSection
-                                        key={index}
-                                        gridSection={gridSection}
-                                        onDelete={() => {
-                                            const updatedSections = gridSections.filter((_, i) => i !== index);
-                                            setGridSections(updatedSections);
-                                            jsonNL.rows = updatedSections;
-                                            setModified(true);
-                                        }}
-                                        onUpdate={(section) => {
-                                            gridSections[index] = section;
-                                            setModified(true);
-                                        }}
-                                        setModified={setModified}
-                                    />
-                                ))}
+                                {gridSections.map((gridSection, index) => {
+                                    const sectionId = generateSectionId(gridSection, index);
+                                    return (
+                                        <SortableGridSection
+                                            key={sectionId}
+                                            gridSection={gridSection}
+                                            sectionIndex={index}
+                                            isCollapsed={collapsedSections.has(sectionId)}
+                                            onToggleCollapse={() => toggleSectionCollapse(index)}
+                                            onDelete={() => {
+                                                const updatedSections = gridSections.filter((_, i) => i !== index);
+                                                setGridSections([...updatedSections]);
+                                                if (jsonNL) {
+                                                    jsonNL.rows = updatedSections;
+                                                }
+                                                setModified(true);
+                                            }}
+                                            onUpdate={(section) => {
+                                                const updatedSections = [...gridSections];
+                                                updatedSections[index] = section;
+                                                setGridSections(updatedSections);
+                                                if (jsonNL) {
+                                                    jsonNL.rows = updatedSections;
+                                                }
+                                                setModified(true);
+                                            }}
+                                            setModified={setModified}
+                                        />
+                                    );
+                                })}
                             </div>
                         </SortableContext>
                     </DndContext>
