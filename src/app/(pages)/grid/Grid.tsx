@@ -95,6 +95,8 @@ const SortablePossibleValue = ({
         opacity: isDragging ? 0.5 : 1,
     };
 
+    const definitionRef = useAutoResize(possibleValue.definition);
+
     return (
         <div
             ref={setNodeRef}
@@ -118,11 +120,12 @@ const SortablePossibleValue = ({
                     min={0}
                     max={100}
                 />
-                <Input
+                <Textarea
+                    ref={definitionRef}
                     value={possibleValue.definition}
                     onChange={(e) => onUpdate(possibleValue.value, e.target.value)}
                     placeholder="Enter definition..."
-                    className="flex-1"
+                    className="flex-1 resize-none no-scrollbar min-h-[40px]"
                 />
             </div>
             
@@ -237,7 +240,7 @@ const SortableNotationCriteria = ({
                                 setModified(true);
                             }}
                             placeholder="Question description..."
-                            className="resize-none min-h-[80px]"
+                            className="resize-none no-scrollbar min-h-[80px]"
                         />
                     </div>
                     
@@ -407,7 +410,7 @@ const SortableGridSection = ({
 
     return (
         <Card ref={setNodeRef} style={style} className="group">
-            <CardHeader className="border-b bg-gray-50">
+            <CardHeader className="border bg-gray-50 rounded-t-lg">
                 <div className="flex items-center gap-3">
                     <div
                         {...attributes}
@@ -424,9 +427,9 @@ const SortableGridSection = ({
                         className="p-1"
                     >
                         {isCollapsed ? (
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-6 h-6" />
                         ) : (
-                            <ChevronDown className="w-4 h-4" />
+                            <ChevronDown className="w-6 h-6" />
                         )}
                     </Button>
                     
@@ -657,7 +660,7 @@ const GridC = () => {
                             placeholder="Enter context or instructions..."
                             value={context}
                             onChange={updateContext}
-                            className="resize-none min-h-[80px]"
+                            className="no-scrollbar resize-none min-h-[80px]"
                         />
                     </CardContent>
                 </Card>
