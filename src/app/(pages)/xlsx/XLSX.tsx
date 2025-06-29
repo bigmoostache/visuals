@@ -139,13 +139,102 @@ export default function XLSXPage() {
     setEditValue('');
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       commitEdit();
     } else if (e.key === 'Escape') {
       e.preventDefault();
       cancelEdit();
+    }
+  };
+
+  // Global keyboard navigation
+  const handleGlobalKeyDown = (e: KeyboardEvent) => {
+    // Save shortcut
+    if (e.ctrlKey && e.key === 's') {
+      e.preventDefault();
+      saveFile();
+      return;
+    }
+
+    // If we're editing, don't interfere with edit controls
+    if (editingCell) return;
+
+    // If no cell selected, select first cell
+    if (!selectedCell) {
+      const firstRow = useFirstRowAsHeader ? 1 : 0;
+      if (sheetData.length > firstRow) {
+        setSelectedCell({r: firstRow, c: 0});
+      }
+      return;
+    }
+
+    const { r, c } = selectedCell;
+    const dataRows = useFirstRowAsHeader ? sheetData.slice(1) : sheetData;
+    const maxRow = (useFirstRowAsHeader ? 1 : 0) + dataRows.length - 1;
+    const maxCol = sheetData[0]?.length - 1 || 0;
+    const minRow = useFirstRowAsHeader ? 1 : 0;
+
+    let newR = r;
+    let newC = c;
+
+    switch (e.key) {
+      case 'ArrowUp':
+        e.preventDefault();
+        newR = Math.max(minRow, r - 1);
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        newR = Math.min(maxRow, r + 1);
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        newC = Math.max(0, c - 1);
+        break;
+      case 'ArrowRight':
+      case 'Tab':
+        e.preventDefault();
+        newC = Math.min(maxCol, c + 1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        // Enter starts editing mode
+        handleCellDoubleClick(r, c);
+        return;
+      case 'F2':
+        e.preventDefault();
+        // F2 also starts editing mode
+        handleCellDoubleClick(r, c);
+        return;
+      case 'Delete':
+      case 'Backspace':
+        e.preventDefault();
+        // Clear cell content
+        handleCellChange(r, c, '');
+        return;
+      default:
+        // If it's a printable character, start editing with that character
+        if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          e.preventDefault();
+          setEditingCell({r, c});
+          setEditValue(e.key);
+          return;
+        }
+        return;
+    }
+
+    // Update selection if we moved
+    if (newR !== r || newC !== c) {
+      setSelectedCell({r: newR, c: newC});
+      
+      // Scroll selected cell into view
+      setTimeout(() => {
+        const cell = document.querySelector(`[data-cell="${newR}-${newC}"]`) as HTMLElement;
+        if (cell) {
+          cell.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        }
+      }, 0);
     }
   };
 
@@ -157,15 +246,9 @@ export default function XLSXPage() {
   }
 
   useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        saveFile();
-      }
-    }
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [workbook]);
+  }, [selectedCell, editingCell, sheetData, useFirstRowAsHeader, workbook]);
 
   // Column resizing
   const onColMouseDown = (e: React.MouseEvent<HTMLDivElement>, colIndex: number) => {
@@ -293,12 +376,15 @@ export default function XLSXPage() {
               height: cellHeight,
               position: 'relative',
               backgroundColor: isSelected ? '#e3f2fd' : 'white',
-              cursor: 'cell'
+              cursor: 'cell',
+              // Add visual focus indicator
+              boxShadow: isSelected ? 'inset 0 0 0 2px #1976d2' : 'none'
             };
             
             return (
               <td 
                 key={c}
+                data-cell={`${actualRowIndex}-${c}`}
                 onClick={() => handleCellClick(actualRowIndex, c)}
                 onDoubleClick={() => handleCellDoubleClick(actualRowIndex, c)}
                 style={cellStyle}
@@ -321,7 +407,7 @@ export default function XLSXPage() {
                     }}
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
+                    onKeyDown={handleEditKeyDown}
                     onBlur={commitEdit}
                   />
                 ) : (
@@ -365,7 +451,21 @@ export default function XLSXPage() {
       </div>
       
       {/* Main table container */}
-      <div className="flex-1 overflow-auto" ref={tableRef} style={{position:'relative'}}>
+      <div 
+        className="flex-1 overflow-auto" 
+        ref={tableRef} 
+        style={{position:'relative'}}
+        tabIndex={0}
+        onFocus={() => {
+          // Auto-select first cell if none selected
+          if (!selectedCell && sheetData.length > 0) {
+            const firstRow = useFirstRowAsHeader ? 1 : 0;
+            if (sheetData.length > firstRow) {
+              setSelectedCell({r: firstRow, c: 0});
+            }
+          }
+        }}
+      >
         <table style={{borderCollapse:'collapse', tableLayout:'fixed', width:'max-content'}}>
           <thead style={{position:'sticky', top:0, background:'#f5f5f5', zIndex:2}}>
             {renderColumnHeaders()}
