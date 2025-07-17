@@ -22,6 +22,7 @@ export interface Reference {
  */
 export interface Leaf {
   leaf_bullet_points: string[];
+  target_number_of_words?: number;
 }
 
 /**

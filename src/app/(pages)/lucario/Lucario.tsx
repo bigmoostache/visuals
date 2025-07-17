@@ -4,9 +4,8 @@ import React, { Suspense, useEffect, useState, useRef } from 'react';
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
 import { Button } from '@/components/ui/button';
-import './styles.css';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, Upload, X, Check, FileText, Loader2 } from 'lucide-react';
+import { ChevronRight, Upload, X, Check, FileText, Loader2, Trash2 } from 'lucide-react';
 
 // Define TypeScript types matching the Pydantic models
 export type FileTypes = 
@@ -89,15 +88,26 @@ const LucarioComponentWrapper = () => {
 
   return lucario ? (
     <div className='lucario-bg'>
-      <LucarioComponent 
-        lucario={lucario} 
-        setLucario={setLucario} 
-        saveLucario={saveLucario} 
-        isMutating={isMutating} 
-      />
+      <div className="min-h-screen flex items-center justify-center py-10">
+        <div className="lucario-card max-w-7xl w-full">
+          <h1 className="text-2xl font-bold text-gray-900 mb-8">Knowledge Base Files</h1>
+          <LucarioComponent 
+            lucario={lucario} 
+            setLucario={setLucario} 
+            saveLucario={saveLucario} 
+            isMutating={isMutating} 
+          />
+        </div>
+      </div>
     </div>
   ) : (
-    <div className='lucario-bg'><p className="lucario-loading">Loading Lucario data...</p></div>
+    <div className='lucario-bg'>
+      <div className="min-h-screen flex items-center justify-center py-10">
+        <div className="lucario-card">
+          <p className="text-center text-gray-600">Loading Lucario data...</p>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -113,17 +123,20 @@ const LucarioComponent = ({
   saveLucario: (updatedData: Lucario) => void;
   isMutating: boolean;
 }) => {
-  // Upload state - changed from single file to array of files
+  // Upload state - changed to array for multiple files
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadMessage, setUploadMessage] = useState('');
-  const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
+  const [uploadProgress, setUploadProgress] = useState<{[key: string]: {status: string, message: string}}>({}); 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [deletingFiles, setDeletingFiles] = useState<Set<number>>(new Set());
 
   // Update the Lucario file using data from an external endpoint
   const handleUpdate = async () => {
-    // Build a comma-separated list of file_uuids from the existing documents
     try {
+      setIsUpdating(true);
       const response = await fetch(
         `${lucario.url}/files_simple?key=${lucario.project_id}`,
         {
@@ -134,13 +147,12 @@ const LucarioComponent = ({
       );
       if (!response.ok) {
         console.error("Update request failed with status:", response.status);
+        setIsUpdating(false);
         return;
       }
       const documents: Document[] = await response.json();
-      // empty everything
       const updatedElements: { [key: number]: Document } = {};
       const updatedUuid2Position: { [key: string]: number } = {};
-
 
       // Update or add documents based on the response
       documents.forEach((document: Document) => {
@@ -156,18 +168,66 @@ const LucarioComponent = ({
       };
       setLucario(updatedLucario);
       saveLucario(updatedLucario);
+      setIsUpdating(false);
     } catch (error) {
       console.error("Error updating lucario:", error);
+      setIsUpdating(false);
     }
   };
 
-  // File selection handler - updated to handle multiple files
+  const deleteFileFromLucario = async (url: string, key: string, file_id: number) => {
+    await fetch(`${url}/projects/${key}/${file_id}`, {
+      method: 'DELETE',
+      headers: {
+        'accept': 'application/json'
+      }
+    });
+  }
+
+  const handleDeleteFile = async (doc: Document) => {
+    if (!window.confirm(`Are you sure you want to delete "${doc.file_name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingFiles(prev => new Set(Array.from(prev).concat(doc.file_id)));
+    
+    try {
+      await deleteFileFromLucario(lucario.url, lucario.project_id, doc.file_id);
+      
+      // Remove the file from local state
+      const updatedElements = { ...lucario.elements };
+      delete updatedElements[doc.local_document_identifier];
+      
+      const updatedUuid2Position = { ...lucario.uuid_2_position };
+      delete updatedUuid2Position[doc.file_uuid];
+      
+      const updatedLucario: Lucario = {
+        ...lucario,
+        elements: updatedElements,
+        uuid_2_position: updatedUuid2Position,
+      };
+      
+      setLucario(updatedLucario);
+      saveLucario(updatedLucario);
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      alert("Failed to delete file. Please try again.");
+    } finally {
+      setDeletingFiles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(doc.file_id);
+        return newSet;
+      });
+    }
+  };
+
+  // File selection handler - updated for multiple files
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      // Convert FileList to array and append to existing files
+      // Convert FileList to array and add to existing files
       const newFiles = Array.from(files);
-      setUploadFiles(prevFiles => [...prevFiles, ...newFiles]);
+      setUploadFiles(prev => [...prev, ...newFiles]);
       setUploadStatus('idle');
       setUploadMessage('');
     }
@@ -190,18 +250,17 @@ const LucarioComponent = ({
       fileInputRef.current.value = '';
     }
   };
-  
-  // Remove a specific file from the selection
+
+  // Remove a single file
   const removeFile = (index: number) => {
-    setUploadFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
-    // Reset status if no files left
-    if (uploadFiles.length === 1) {
-      setUploadStatus('idle');
-      setUploadMessage('');
-    }
+    setUploadFiles(prev => {
+      const newFiles = [...prev];
+      newFiles.splice(index, 1);
+      return newFiles;
+    });
   };
   
-  // Handle file upload - updated to handle multiple files
+  // Handle file upload - updated for multiple files
   const handleUpload = async () => {
     if (uploadFiles.length === 0) {
       setUploadMessage('Please select at least one file first');
@@ -209,88 +268,110 @@ const LucarioComponent = ({
     }
     
     setUploadStatus('uploading');
-    setUploadMessage(`Uploading ${uploadFiles.length} file(s)...`);
-    
-    // Track successful and failed uploads
-    let successCount = 0;
-    let failCount = 0;
+    setUploadMessage(`Uploading ${uploadFiles.length} file${uploadFiles.length > 1 ? 's' : ''}...`);
     
     // Initialize progress tracking for each file
-    const initialProgress: {[key: string]: number} = {};
-    uploadFiles.forEach(file => {
-      initialProgress[file.name] = 0;
-    });
+    const initialProgress = uploadFiles.reduce((acc, file) => {
+      acc[file.name] = { status: 'pending', message: 'Waiting to upload...' };
+      return acc;
+    }, {} as {[key: string]: {status: string, message: string}});
+    
     setUploadProgress(initialProgress);
     
-    // Upload each file sequentially
-    for (const file of uploadFiles) {
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('data', 'Uploaded from Lucario UI');
-        
-        const response = await fetch(`${lucario.url}/upload`, {
-          method: 'POST',
-          headers: {
-            'filename': file.name,
-            'key': lucario.project_id,
-          },
-          body: formData,
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Upload failed for ${file.name} with status: ${response.status}`);
+    let successCount = 0;
+    let errorCount = 0;
+    
+    // Upload files in parallel
+    try {
+      const uploadPromises = uploadFiles.map(async (file, index) => {
+        try {
+          // Update current file status
+          setUploadProgress(prev => ({
+            ...prev,
+            [file.name]: { status: 'uploading', message: 'Uploading...' }
+          }));
+          
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('data', 'Uploaded from Lucario UI');
+          
+          const response = await fetch(`${lucario.url}/upload`, {
+            method: 'POST',
+            headers: {
+              'filename': file.name,
+              'key': lucario.project_id,
+            },
+            body: formData,
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Upload failed with status: ${response.status}`);
+          }
+          
+          const result = await response.json();
+          
+          // Update status for this file
+          setUploadProgress(prev => ({
+            ...prev,
+            [file.name]: { status: 'success', message: 'Uploaded successfully!' }
+          }));
+          
+          successCount++;
+          return { success: true, fileName: file.name };
+        } catch (error) {
+          console.error(`Error uploading file ${file.name}:`, error);
+          
+          // Update status for this file
+          setUploadProgress(prev => ({
+            ...prev,
+            [file.name]: { 
+              status: 'error', 
+              message: `Failed: ${error instanceof Error ? error.message : 'Unknown error'}` 
+            }
+          }));
+          
+          errorCount++;
+          return { success: false, fileName: file.name, error };
         }
-        
-        await response.json();
-        successCount++;
-        
-        // Update progress for this file
-        setUploadProgress(prev => ({
-          ...prev,
-          [file.name]: 100
-        }));
-        
-      } catch (error) {
-        console.error(`Error uploading file ${file.name}:`, error);
-        failCount++;
-        
-        // Mark this file's progress as failed
-        setUploadProgress(prev => ({
-          ...prev,
-          [file.name]: -1 // Using -1 to indicate error
-        }));
+      });
+      
+      // Wait for all uploads to complete
+      const results = await Promise.all(uploadPromises);
+      
+      // Set overall status based on results
+      if (errorCount === 0) {
+        setUploadStatus('success');
+        setUploadMessage(`All ${successCount} file${successCount !== 1 ? 's' : ''} uploaded successfully!`);
+      } else if (successCount === 0) {
+        setUploadStatus('error');
+        setUploadMessage(`All ${errorCount} file uploads failed.`);
+      } else {
+        setUploadStatus('success');
+        setUploadMessage(`${successCount} file${successCount !== 1 ? 's' : ''} uploaded successfully. ${errorCount} failed.`);
       }
-    }
-    
-    // Set final status message
-    if (failCount === 0) {
-      setUploadStatus('success');
-      setUploadMessage(`Successfully uploaded ${successCount} file(s)`);
-    } else if (successCount === 0) {
+      
+      // Clear the file input after uploads complete
+      setTimeout(() => {
+        clearAllSelectedFiles();
+        // Refresh the file list
+        handleUpdate();
+      }, 2000);
+    } catch (error) {
+      console.error("Error in batch upload process:", error);
       setUploadStatus('error');
-      setUploadMessage(`Failed to upload ${failCount} file(s)`);
-    } else {
-      setUploadStatus('error');
-      setUploadMessage(`Uploaded ${successCount} file(s), failed to upload ${failCount} file(s)`);
+      setUploadMessage(`Upload process failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    
-    // Clear the files and refresh the list after a delay
-    setTimeout(() => {
-      clearAllSelectedFiles();
-      // Refresh the file list
-      handleUpdate();
-    }, 2000);
   };
   
-  // Handle drop zone - updated to handle multiple files
+  // Handle drop zone - updated for multiple files
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      // Convert FileList to array and add to existing files
       const newFiles = Array.from(e.dataTransfer.files);
-      setUploadFiles(prevFiles => [...prevFiles, ...newFiles]);
+      setUploadFiles(prev => [...prev, ...newFiles]);
       setUploadStatus('idle');
       setUploadMessage('');
     }
@@ -303,90 +384,166 @@ const LucarioComponent = ({
 
   const LucarioElement = ({ doc }: { doc: Document }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const isDeleting = deletingFiles.has(doc.file_id);
               
     return (
-      <div key={doc.file_uuid} className="lucario-card-inner">
-        <div className="flex justify-between items-center">
-          <p className="document-name">{doc.file_name}</p>
-          <button 
-            onClick={() => setIsExpanded(!isExpanded)} 
-            className="p-1 rounded-full hover:bg-gray-100 transition-all"
-            aria-label={isExpanded ? "Hide details" : "Show details"}
-          >
-            <ChevronRight 
-              size={18} 
-              className={`transform transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
-            />
-          </button>
+      <div key={doc.file_uuid} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 text-sm relative">
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="font-semibold text-gray-900 text-sm flex-1 pr-2 leading-tight">{doc.file_name}</h3>
+          <div className="flex gap-1 ml-2">
+            <button 
+              onClick={() => setIsExpanded(!isExpanded)} 
+              className="p-1.5 rounded-md hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
+              aria-label={isExpanded ? "Hide details" : "Show details"}
+            >
+              <ChevronRight 
+                size={16} 
+                className={`transform transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
+              />
+            </button>
+            <button 
+              onClick={() => handleDeleteFile(doc)}
+              disabled={isDeleting}
+              className="p-1.5 rounded-md hover:bg-red-50 transition-colors text-gray-400 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Delete file"
+            >
+              {isDeleting ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Trash2 size={16} />
+              )}
+            </button>
+          </div>
         </div>
         
-        <p className="document-ext">
-          Extension: <span className="font-medium">{doc.file_ext}</span>
-        </p>
-        <p className="document-status">
-          <span 
-            className="status-indicator" 
-            style={{
-              backgroundColor: (function(status: PipelineStatus) {
-                switch(status) {
-                  case 'anticipated': return '#A0AEC0';
-                  case 'pending': return '#F6AD55';
-                  case 'success': return '#48BB78';
-                  case 'error': return '#F56565';
-                  case 'retrying': return '#63B3ED';
-                  default: return '#CBD5E0';
-                }
-              })(doc.pipeline_status)
-            }}
-          ></span>
-          <span className="status-text">{doc.pipeline_status}</span>
-        </p>
-        <p className="document-link">
+        <div className="space-y-2 mb-3">
+          <div className="text-xs text-gray-600">
+            <span className="font-medium">Type:</span> <span className="font-mono text-gray-800">{doc.file_ext.toUpperCase()}</span>
+          </div>
+          
+          <div className="flex items-center text-xs">
+            <span className="text-gray-600 mr-2">Status:</span>
+            <span 
+              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+              style={{
+                backgroundColor: (function(status: PipelineStatus) {
+                  switch(status) {
+                    case 'anticipated': return '#F3F4F6';
+                    case 'pending': return '#FEF3C7';
+                    case 'success': return '#D1FAE5';
+                    case 'error': return '#FEE2E2';
+                    case 'retrying': return '#DBEAFE';
+                    default: return '#F3F4F6';
+                  }
+                })(doc.pipeline_status),
+                color: (function(status: PipelineStatus) {
+                  switch(status) {
+                    case 'anticipated': return '#6B7280';
+                    case 'pending': return '#D97706';
+                    case 'success': return '#059669';
+                    case 'error': return '#DC2626';
+                    case 'retrying': return '#2563EB';
+                    default: return '#6B7280';
+                  }
+                })(doc.pipeline_status)
+              }}
+            >
+              <span 
+                className="w-1.5 h-1.5 rounded-full mr-1.5" 
+                style={{
+                  backgroundColor: (function(status: PipelineStatus) {
+                    switch(status) {
+                      case 'anticipated': return '#6B7280';
+                      case 'pending': return '#D97706';
+                      case 'success': return '#059669';
+                      case 'error': return '#DC2626';
+                      case 'retrying': return '#2563EB';
+                      default: return '#6B7280';
+                    }
+                  })(doc.pipeline_status)
+                }}
+              ></span>
+              {doc.pipeline_status}
+            </span>
+          </div>
+        </div>
+        
+        <div className="pt-3 border-t border-gray-100">
           <a 
             href={`${lucario.url}/files?file=${doc.file_uuid}`} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="download-link"
+            className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
           >
-            Download File
+            <FileText size={14} className="mr-1" />
+            Download
           </a>
-        </p>
+        </div>
         
-        {isExpanded && doc.description && (() => {
-          try {
-            const parsedDesc = JSON.parse(doc.description);
-            if (parsedDesc && typeof parsedDesc === 'object' && !Array.isArray(parsedDesc)) {
-              return (
-                <pre className="document-description text-wrap">
-                  <code>{JSON.stringify(parsedDesc, null, 2)}</code>
-                </pre>
-              );
-            } else {
-              return <p className="document-description">{doc.description}</p>;
-            }
-          } catch (error) {
-            return <p className="document-description">{doc.description}</p>;
-          }
-        })()}
+        {isExpanded && doc.description && (
+          <div className="mt-4 pt-3 border-t border-gray-100">
+            <div className="text-xs text-gray-600 mb-2 font-medium">Description:</div>
+            {(() => {
+              try {
+                const parsedDesc = JSON.parse(doc.description);
+                if (parsedDesc && typeof parsedDesc === 'object' && !Array.isArray(parsedDesc)) {
+                  return (
+                    <pre className="text-xs text-gray-700 bg-gray-50 p-2 rounded border text-wrap max-h-40 overflow-auto font-mono">
+                      <code>{JSON.stringify(parsedDesc, null, 2)}</code>
+                    </pre>
+                  );
+                } else {
+                  return <div className="text-xs text-gray-700 bg-gray-50 p-2 rounded border max-h-40 overflow-auto">{doc.description}</div>;
+                }
+              } catch (error) {
+                return <div className="text-xs text-gray-700 bg-gray-50 p-2 rounded border max-h-40 overflow-auto">{doc.description}</div>;
+              }
+            })()}
+          </div>
+        )}
+        
+        {isDeleting && (
+          <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
+            <div className="flex items-center text-gray-600">
+              <Loader2 size={16} className="animate-spin mr-2" />
+              <span className="text-sm">Deleting...</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-10">
-      <div className="lucario-card">
-        <h1 className="lucario-title">Knowledge Base Files</h1>
-        <div className="lucario-update-button-container mb-4">
-          <Button onClick={handleUpdate} disabled={isMutating}>
-            {isMutating ? "Updating..." : "Update & Save"}
-          </Button>
-        </div>
-        {/* Upload Section */}
-        <div className="upload-section">
-          <h2 className="upload-title">Upload New Documents</h2>
+    <div className='space-y-6'>
+      <div className="flex justify-start">
+        <Button 
+          onClick={handleUpdate} 
+          disabled={isMutating || isUpdating}
+          className="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 text-sm font-medium"
+        >
+          {isUpdating ? (
+            <>
+              <Loader2 size={16} className="animate-spin mr-2" />
+              Updating...
+            </>
+          ) : (
+            "Refresh Documents"
+          )}
+        </Button>
+      </div>
+      
+      {/* Upload Section */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Upload Documents</h2>
           
           <div 
-            className={`upload-dropzone ${uploadFiles.length > 0 ? 'has-file' : ''}`}
+            className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200 ${
+              uploadFiles.length > 0 
+                ? 'border-blue-300 bg-blue-50' 
+                : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+            }`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onClick={uploadFiles.length > 0 ? undefined : triggerFileInput}
@@ -396,122 +553,130 @@ const LucarioComponent = ({
               ref={fileInputRef}
               onChange={handleFileSelect}
               className="hidden"
-              multiple // Enable multiple file selection
+              multiple
             />
             
             {uploadFiles.length === 0 ? (
-              <div className="upload-dropzone-inner">
-                <Upload size={40} className="upload-icon" />
-                <p className="upload-text">Drag & drop files here, or click to select</p>
-                <p className="upload-subtext">Supported file types: PDF, DOCX, TXT, CSV, etc.</p>
+              <div className="max-w-sm mx-auto">
+                <Upload size={32} className="text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-700 mb-1 font-medium">Drop files here or click to select</p>
+                <p className="text-gray-500 text-sm">Supported formats: PDF, DOCX, TXT, CSV, and more</p>
               </div>
             ) : (
-              <div className="upload-files-list w-full">
-                <div className="upload-files-header">
-                  <p className="upload-files-count">{uploadFiles.length} file(s) selected</p>
+              <div className="w-full text-left">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-medium text-gray-900">
+                    {uploadFiles.length} file{uploadFiles.length !== 1 ? 's' : ''} selected
+                  </h3>
                   <button 
-                    className="upload-files-clear-all" 
+                    className="text-gray-500 hover:text-gray-700 flex items-center px-2 py-1 rounded-md text-sm hover:bg-gray-100 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       clearAllSelectedFiles();
                     }}
-                    aria-label="Clear all files"
                   >
-                    Clear All
+                    <X size={14} className="mr-1" />
+                    Clear all
                   </button>
                 </div>
                 
-                <div className="upload-files-items">
+                <div className="space-y-2 max-h-48 overflow-y-auto">
                   {uploadFiles.map((file, index) => (
-                    <div key={`${file.name}-${index}`} className="upload-file-info">
-                      <div className="upload-file-details">
-                        <FileText size={24} className="upload-file-icon" />
-                        <div className="upload-file-name-container">
-                          <p className="upload-file-name">{file.name}</p>
-                          <p className="upload-file-size">{(file.size / 1024).toFixed(1)} KB</p>
-                          
-                          {/* Progress bar for file upload */}
-                          {uploadStatus === 'uploading' && uploadProgress[file.name] !== undefined && (
-                            <div className="upload-file-progress-container">
-                              <div 
-                                className={`upload-file-progress-bar ${uploadProgress[file.name] === -1 ? 'error' : ''}`}
-                                style={{ width: `${uploadProgress[file.name] === -1 ? 100 : uploadProgress[file.name]}%` }}
-                              ></div>
-                              <span className="upload-file-progress-text">
-                                {uploadProgress[file.name] === -1 ? 'Failed' : 
-                                 uploadProgress[file.name] === 100 ? 'Completed' : 
-                                 `${uploadProgress[file.name]}%`}
-                              </span>
-                            </div>
-                          )}
+                    <div 
+                      key={`${file.name}-${index}`} 
+                      className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <FileText size={18} className="text-gray-400 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-gray-900 truncate text-sm">{file.name}</p>
+                          <p className="text-gray-500 text-xs">{(file.size / 1024).toFixed(1)} KB</p>
                         </div>
                       </div>
+                      
+                      {uploadProgress[file.name] && (
+                        <div className={`text-xs mx-3 ${
+                          uploadProgress[file.name].status === 'uploading' ? 'text-blue-600' :
+                          uploadProgress[file.name].status === 'success' ? 'text-green-600' : 
+                          uploadProgress[file.name].status === 'error' ? 'text-red-600' : 'text-gray-500'
+                        }`}>
+                          {uploadProgress[file.name].message}
+                        </div>
+                      )}
+                      
                       <button 
-                        className="upload-file-remove" 
+                        className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors flex-shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           removeFile(index);
                         }}
-                        aria-label={`Remove ${file.name}`}
+                        aria-label="Remove file"
                       >
-                        <X size={20} />
+                        <X size={16} />
                       </button>
                     </div>
                   ))}
                 </div>
                 
-                {/* Show "Add more files" button when files are already selected */}
                 <button 
-                  className="upload-add-more" 
+                  className="mt-3 flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline"
                   onClick={(e) => {
                     e.stopPropagation();
                     triggerFileInput();
                   }}
                 >
-                  + Add More Files
+                  <Upload size={16} className="mr-1" />
+                  Add more files
                 </button>
               </div>
             )}
           </div>
           
           {uploadMessage && (
-            <div className={`upload-message upload-message-${uploadStatus}`}>
-              {uploadStatus === 'uploading' && <Loader2 size={16} className="upload-spinner" />}
-              {uploadStatus === 'success' && <Check size={16} className="upload-success-icon" />}
-              {uploadStatus === 'error' && <X size={16} className="upload-error-icon" />}
+            <div className={`flex items-center gap-2 mt-4 p-3 rounded-md text-sm ${
+              uploadStatus === 'idle' ? 'bg-gray-50 text-gray-700' :
+              uploadStatus === 'uploading' ? 'bg-blue-50 text-blue-800' :
+              uploadStatus === 'success' ? 'bg-green-50 text-green-800' :
+              'bg-red-50 text-red-800'
+            }`}>
+              {uploadStatus === 'uploading' && <Loader2 size={16} className="animate-spin" />}
+              {uploadStatus === 'success' && <Check size={16} className="text-green-600" />}
+              {uploadStatus === 'error' && <X size={16} className="text-red-600" />}
               <span>{uploadMessage}</span>
             </div>
           )}
           
-          <div className="upload-actions">
-            <Button 
-              onClick={handleUpload} 
-              disabled={uploadFiles.length === 0 || uploadStatus === 'uploading'}
-              className="upload-button"
-            >
-              {uploadStatus === 'uploading' ? (
-                <>
-                  <Loader2 size={16} className="mr-2 upload-spinner" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload size={16} className="mr-2" />
-                  Upload {uploadFiles.length > 0 ? `(${uploadFiles.length})` : ''}
-                </>
-              )}
-            </Button>
-          </div>
+          {uploadFiles.length > 0 && (
+            <div className="mt-6 flex justify-center">
+              <Button 
+                onClick={handleUpload} 
+                disabled={uploadStatus === 'uploading'}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 text-sm font-medium disabled:opacity-50"
+              >
+                {uploadStatus === 'uploading' ? (
+                  <>
+                    <Loader2 size={16} className="mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload size={16} className="mr-2" />
+                    Upload {uploadFiles.length} File{uploadFiles.length !== 1 ? 's' : ''}
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
-        
-        <div className="separator"></div>
-        
-        <div>
-          <div className="lucario-grid">
-            {Object.values(lucario.elements).map((doc: Document) => (
-              <LucarioElement key={doc.file_id} doc={doc} />
-            ))}
-          </div>
+      </div>
+      
+      {/* Documents Grid */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Documents</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Object.values(lucario.elements).map((doc: Document) => (
+            <LucarioElement key={doc.file_id} doc={doc} />
+          ))}
         </div>
       </div>
     </div>

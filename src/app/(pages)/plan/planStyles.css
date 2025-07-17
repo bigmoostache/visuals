@@ -176,3 +176,109 @@ button:disabled {
     padding: 8px;
   }
 }
+
+/* Word Count Input Styles */
+.word-count-container {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #f9fafb;
+}
+
+.word-count-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.word-count-input-group {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: white;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.word-count-button {
+  border: none;
+  border-radius: 0;
+  padding: 0.5rem;
+  height: 2.5rem;
+  width: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.word-count-button:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.word-count-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.word-count-button-left {
+  border-right: 1px solid #d1d5db;
+}
+
+.word-count-button-right {
+  border-left: 1px solid #d1d5db;
+}
+
+.word-count-input {
+  border: none;
+  border-radius: 0;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  width: 80px;
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  outline: none;
+  background-color: white;
+}
+
+.word-count-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.word-count-input-group:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Remove spinner arrows from number input */
+.word-count-input::-webkit-outer-spin-button,
+.word-count-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.word-count-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .word-count-container {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+  }
+  
+  .word-count-input-group {
+    width: 100%;
+    max-width: 200px;
+  }
+}
