@@ -255,45 +255,41 @@ export const GridEditor = () => {
     <>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b shadow-sm z-10">
+        <div className="sticky top-0 bg-white border-b border-gray-200 z-10">
           <div className="max-w-5xl mx-auto px-6 py-4">
             <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <h1 className="text-2xl font-bold text-gray-900">Grid Editor</h1>
-                <div className="flex gap-2">
-                  <Badge variant="outline">{totalStats.sections} sections</Badge>
-                  <Badge variant="outline">{totalStats.questions} questions</Badge>
-                  <Badge variant="outline">{totalStats.values} values</Badge>
+              <div className="flex items-center gap-8">
+                <h1 className="text-xl font-semibold text-gray-900">Grid Editor</h1>
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <span>{totalStats.sections} {totalStats.sections === 1 ? 'section' : 'sections'}</span>
+                  <span>•</span>
+                  <span>{totalStats.questions} {totalStats.questions === 1 ? 'question' : 'questions'}</span>
+                  <span>•</span>
+                  <span>{totalStats.values} {totalStats.values === 1 ? 'value' : 'values'}</span>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3">
-                {lastSaved && (
-                  <span className="text-sm text-gray-500">
-                    Last saved: {lastSaved.toLocaleTimeString()}
-                  </span>
-                )}
-                
+              <div className="flex items-center gap-4">
                 {modified && (
-                  <Badge variant="secondary" className="animate-pulse">
-                    Unsaved changes
-                  </Badge>
+                  <span className="text-sm text-orange-600">• Unsaved changes</span>
                 )}
                 
                 <Button
                   onClick={handleSave}
                   disabled={!modified || isSaving}
+                  variant={modified ? "default" : "outline"}
+                  size="sm"
                   className="gap-2"
                 >
                   {isSaving ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Saving...
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Saving
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4" />
-                      Save {modified && '(Ctrl+S)'}
+                      <Save className="w-3.5 h-3.5" />
+                      Save
                     </>
                   )}
                 </Button>
@@ -303,34 +299,35 @@ export const GridEditor = () => {
         </div>
 
         {/* Main content */}
-        <ScrollArea className="h-[calc(100vh-73px)]">
-          <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+        <ScrollArea className="h-[calc(100vh-65px)]">
+          <div className="max-w-5xl mx-auto px-6 py-6 space-y-6">
             {/* Context Section */}
-            <Card>
-              <CardHeader>
-                <h2 className="text-xl font-semibold">Context</h2>
-                <p className="text-sm text-gray-600">
-                  Provide context or instructions for this evaluation grid
+            <Card className="border-gray-200">
+              <CardHeader className="pb-3">
+                <h2 className="text-base font-medium text-gray-900">Context</h2>
+                <p className="text-sm text-gray-500">
+                  Instructions and guidelines for this evaluation grid
                 </p>
               </CardHeader>
               <CardContent>
                 <Textarea
                   ref={contextRef}
-                  placeholder="Enter context or instructions..."
+                  placeholder="Add context or instructions..."
                   value={grid.context || ''}
                   onChange={updateContext}
-                  className="resize-none min-h-[100px]"
+                  className="resize-none min-h-[80px] text-sm border-gray-200 focus:border-gray-400 focus:ring-0 placeholder:text-gray-400"
                   aria-label="Grid context"
                 />
               </CardContent>
             </Card>
 
             {/* Sections */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Sections</h2>
+                <h2 className="text-base font-medium text-gray-900">Sections</h2>
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={handleAddSection}
                   className="gap-2"
                 >
@@ -340,12 +337,12 @@ export const GridEditor = () => {
               </div>
 
               {grid.rows.length === 0 ? (
-                <Card className="border-2 border-dashed">
-                  <CardContent className="py-16 text-center text-gray-400">
-                    <p className="mb-4">No sections yet. Start by adding your first section.</p>
-                    <Button variant="outline" onClick={handleAddSection}>
+                <Card className="border border-dashed border-gray-300">
+                  <CardContent className="py-12 text-center">
+                    <p className="text-gray-500 mb-4">No sections yet</p>
+                    <Button variant="outline" size="sm" onClick={handleAddSection}>
                       <Plus className="w-4 h-4 mr-2" />
-                      Add First Section
+                      Create First Section
                     </Button>
                   </CardContent>
                 </Card>
@@ -359,7 +356,7 @@ export const GridEditor = () => {
                     items={sortableItems}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                       {grid.rows.map((section) => (
                         <SectionCard
                           key={section.id}
@@ -381,9 +378,9 @@ export const GridEditor = () => {
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete {deleteConfirm?.type}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the {deleteConfirm?.type} and all its contents. 
+              This will permanently delete the {deleteConfirm?.type} and all its contents.
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -395,7 +392,6 @@ export const GridEditor = () => {
                   handleDeleteSection(deleteConfirm.id);
                 }
               }}
-              className="bg-red-600 hover:bg-red-700"
             >
               Delete
             </AlertDialogAction>
@@ -403,7 +399,7 @@ export const GridEditor = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Toaster position="bottom-right" richColors />
+      <Toaster position="bottom-right" />
     </>
   );
 };

@@ -10,8 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { NotationCriteria, PossibleValue, CONSTANTS } from '../types';
 import { PossibleValueItem } from './PossibleValueItem';
 import { useAutoResize } from '../hooks/useAutoResize';
@@ -130,13 +128,13 @@ const CriteriaCardComponent = ({
   );
 
   return (
-    <Card ref={setNodeRef} style={style} className="group relative overflow-hidden border-gray-100 shadow-sm hover:shadow-xl hover:border-blue-200 transition-all duration-300">
-      <CardHeader className="pb-4 bg-gradient-to-br from-white via-blue-50/20 to-purple-50/20">
+    <Card ref={setNodeRef} style={style} className="group relative border-gray-200 hover:shadow-sm transition-shadow">
+      <CardHeader className="pb-3 border-b border-gray-100">
         <div className="flex items-start gap-3">
           <button
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 mt-2 disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
+            className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 mt-1 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={disabled}
             aria-label="Drag to reorder criteria"
           >
@@ -148,8 +146,8 @@ const CriteriaCardComponent = ({
               <Input
                 value={criteria.name}
                 onChange={handleNameChange}
-                placeholder="Question name..."
-                className={`font-semibold text-base bg-transparent border-0 border-b-2 rounded-none px-0 focus:ring-0 focus:border-blue-400 placeholder:text-gray-400 ${nameError ? 'border-red-400' : 'border-gray-200'}`}
+                placeholder="Question title"
+                className={`font-medium text-base border-gray-200 focus:border-gray-400 focus:ring-0 ${nameError ? 'border-red-500' : ''}`}
                 disabled={disabled}
                 aria-label="Criteria name"
                 maxLength={CONSTANTS.MAX_CRITERIA_NAME_LENGTH}
@@ -166,8 +164,8 @@ const CriteriaCardComponent = ({
               ref={definitionRef}
               value={criteria.definition}
               onChange={handleDefinitionChange}
-              placeholder="Question description..."
-              className="resize-none min-h-[60px] text-sm text-gray-600 bg-white/50 border-gray-200 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 placeholder:text-gray-400"
+              placeholder="Description"
+              className="resize-none min-h-[60px] text-sm text-gray-600 border-gray-200 focus:border-gray-400 focus:ring-0 placeholder:text-gray-400"
               disabled={disabled}
               aria-label="Criteria description"
             />
@@ -178,22 +176,20 @@ const CriteriaCardComponent = ({
             size="icon"
             onClick={onDelete}
             disabled={disabled}
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600"
             aria-label="Delete criteria"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       </CardHeader>
       
-      <Separator className="opacity-50" />
-      
-      <CardContent className="pt-5 pb-4 space-y-4 bg-gradient-to-b from-gray-50/50 to-white">
-        <div className="flex items-center justify-between px-1">
-          <h4 className="font-medium text-xs uppercase tracking-wider text-gray-500">Possible Values</h4>
-          <Badge variant="outline" className="text-xs font-normal border-gray-200 bg-white">
-            {criteria.possible_values.length} {criteria.possible_values.length === 1 ? 'value' : 'values'}
-          </Badge>
+      <CardContent className="pt-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-medium text-gray-700">Values</h4>
+          <span className="text-xs text-gray-500">
+            {criteria.possible_values.length} items
+          </span>
         </div>
         
         <DndContext
@@ -221,16 +217,15 @@ const CriteriaCardComponent = ({
         </DndContext>
         
         {criteria.possible_values.length === 0 && (
-          <div className="text-center py-6 text-gray-400 bg-gray-50/50 border border-dashed border-gray-200 rounded-xl">
-            <p className="text-sm">No values defined yet</p>
-            <p className="text-xs mt-1 text-gray-300">Add your first value below</p>
+          <div className="text-center py-6 text-gray-400 border border-dashed border-gray-200 rounded-lg bg-gray-50">
+            <p className="text-sm">No values defined</p>
           </div>
         )}
         
-        <div className="flex gap-2 p-2.5 bg-gradient-to-r from-blue-50/30 to-purple-50/30 rounded-xl border border-dashed border-blue-200/50">
+        <div className="flex gap-2 p-2 border border-gray-200 rounded-lg bg-gray-50">
           <Input
             type="number"
-            placeholder="Val"
+            placeholder="0"
             value={newValue !== null ? newValue : ''}
             onChange={(e) => {
               const value = e.target.value ? Number(e.target.value) : null;
@@ -238,17 +233,17 @@ const CriteriaCardComponent = ({
                 setNewValue(value);
               }
             }}
-            className="w-16 h-8 text-center text-sm font-medium bg-white border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="w-16 h-8 text-center text-sm border-gray-200 focus:border-gray-400 focus:ring-0"
             min={0}
             max={100}
             disabled={disabled}
             aria-label="New value"
           />
           <Input
-            placeholder="Enter definition..."
+            placeholder="Add description"
             value={newDefinition}
             onChange={(e) => setNewDefinition(e.target.value)}
-            className="flex-1 h-8 text-sm bg-white border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 placeholder:text-gray-400"
+            className="flex-1 h-8 text-sm border-gray-200 focus:border-gray-400 focus:ring-0 placeholder:text-gray-400"
             disabled={disabled}
             aria-label="New definition"
           />
@@ -256,10 +251,10 @@ const CriteriaCardComponent = ({
             onClick={handleAddValue}
             disabled={disabled || newValue === null || !newDefinition.trim()}
             size="icon"
-            className="h-8 w-8 bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-200 disabled:text-gray-400"
+            className="h-8 w-8"
             aria-label="Add value"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
           </Button>
         </div>
       </CardContent>

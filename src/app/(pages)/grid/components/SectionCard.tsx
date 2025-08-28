@@ -16,14 +16,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { GridSection, NotationCriteria, CONSTANTS } from '../types';
 import { CriteriaCard } from './CriteriaCard';
 import { createNewCriteria, validateSectionName } from '../utils';
@@ -123,13 +115,13 @@ const SectionCardComponent = ({
   const totalValues = section.rows.reduce((acc, row) => acc + row.possible_values.length, 0);
 
   return (
-    <Card ref={setNodeRef} style={style} className="group border-2 border-gray-100 shadow-lg hover:shadow-2xl hover:border-blue-200 transition-all duration-300 overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
-        <div className="flex items-center gap-2">
+    <Card ref={setNodeRef} style={style} className="group border border-gray-200 hover:shadow-md transition-shadow">
+      <CardHeader className="bg-gray-50 border-b border-gray-200">
+        <div className="flex items-center gap-3">
           <button
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing text-white/60 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
+            className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={disabled}
             aria-label="Drag to reorder section"
           >
@@ -140,7 +132,7 @@ const SectionCardComponent = ({
             variant="ghost"
             size="icon"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-7 w-7 text-white hover:bg-white/20 transition-colors"
+            className="h-7 w-7 text-gray-600 hover:text-gray-900"
             aria-label={isCollapsed ? "Expand section" : "Collapse section"}
           >
             {isCollapsed ? (
@@ -154,10 +146,8 @@ const SectionCardComponent = ({
             <Input
               value={section.name}
               onChange={handleNameChange}
-              placeholder="Section name..."
-              className={`text-lg font-bold border-0 shadow-none bg-transparent text-white placeholder:text-white/50 hover:bg-white/10 focus:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 rounded-lg px-3 transition-all ${
-                nameError ? 'text-red-300' : ''
-              }`}
+              placeholder="Section name"
+              className={`text-base font-semibold border-0 shadow-none bg-transparent placeholder:text-gray-400 hover:bg-white focus:bg-white px-2 -mx-2 ${nameError ? 'text-red-500' : ''}`}
               disabled={disabled}
               maxLength={CONSTANTS.MAX_SECTION_NAME_LENGTH}
               aria-label="Section name"
@@ -170,24 +160,10 @@ const SectionCardComponent = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex gap-1.5">
-                    <Badge className="text-xs bg-white/20 hover:bg-white/30 text-white border-white/30">
-                      {totalQuestions} {totalQuestions === 1 ? 'Q' : 'Qs'}
-                    </Badge>
-                    <Badge className="text-xs bg-white/20 hover:bg-white/30 text-white border-white/30">
-                      {totalValues} {totalValues === 1 ? 'V' : 'Vs'}
-                    </Badge>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>This section contains {totalQuestions} questions with {totalValues} total values</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span>{totalQuestions} {totalQuestions === 1 ? 'question' : 'questions'}</span>
+            <span>•</span>
+            <span>{totalValues} {totalValues === 1 ? 'value' : 'values'}</span>
           </div>
           
           <Button
@@ -195,30 +171,28 @@ const SectionCardComponent = ({
             size="icon"
             onClick={onDelete}
             disabled={disabled}
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 text-white hover:bg-red-500/30 hover:text-white rounded-lg"
+            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600"
             aria-label="Delete section"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       </CardHeader>
       
       {!isCollapsed && (
         <>
-          <CardContent className="p-6 space-y-5 bg-gradient-to-b from-gray-50 to-white">
+          <CardContent className="p-4 space-y-4">
             {section.rows.length === 0 ? (
-              <div className="text-center py-10 bg-gradient-to-br from-blue-50/50 to-purple-50/50 border border-dashed border-blue-200 rounded-xl">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-sm mb-3">
-                  <Plus className="w-5 h-5 text-blue-500" />
-                </div>
-                <p className="mb-3 text-gray-500 font-medium">No questions yet</p>
+              <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+                <p className="text-sm text-gray-500 mb-3">No questions in this section</p>
                 <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleAddCriteria}
                   disabled={disabled}
-                  className="bg-blue-500 hover:bg-blue-600 text-white shadow-md"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add First Question
+                  Add Question
                 </Button>
               </div>
             ) : (
@@ -252,7 +226,7 @@ const SectionCardComponent = ({
                 variant="outline"
                 onClick={handleAddCriteria}
                 disabled={disabled}
-                className="w-full h-11 border-dashed border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50/50 text-blue-600 hover:text-blue-700 transition-all duration-200 rounded-xl"
+                className="w-full border-dashed border-gray-300 hover:border-gray-400 text-gray-600"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Question

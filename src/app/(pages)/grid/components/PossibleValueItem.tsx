@@ -55,38 +55,35 @@ const PossibleValueItemComponent = ({
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative flex items-center gap-2 p-3 bg-gradient-to-r from-white to-gray-50/30 border border-gray-100 rounded-xl hover:border-gray-300 hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
+      className="group flex items-center gap-3 p-2 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
     >
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
+        className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={disabled}
         aria-label="Drag to reorder"
       >
-        <GripVertical className="w-3.5 h-3.5" />
+        <GripVertical className="w-4 h-4" />
       </button>
       
-      <div className="flex items-center gap-2 flex-1">
-        <div className="relative">
-          <Input
-            type="number"
-            value={possibleValue.value}
-            onChange={handleValueChange}
-            className="w-16 h-9 text-center font-medium bg-white border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-            min={0}
-            max={100}
-            disabled={disabled}
-            aria-label="Value"
-          />
-          <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
+      <div className="flex items-center gap-3 flex-1">
+        <Input
+          type="number"
+          value={possibleValue.value}
+          onChange={handleValueChange}
+          className="w-16 h-8 text-center text-sm font-medium border-gray-200 focus:border-gray-400 focus:ring-0"
+          min={0}
+          max={100}
+          disabled={disabled}
+          aria-label="Value"
+        />
         <Textarea
           ref={definitionRef}
           value={possibleValue.definition}
           onChange={handleDefinitionChange}
-          placeholder="Enter definition..."
-          className="flex-1 resize-none min-h-[36px] text-sm bg-white/80 border-gray-200 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 placeholder:text-gray-400"
+          placeholder="Description"
+          className="flex-1 resize-none min-h-[32px] text-sm border-gray-200 focus:border-gray-400 focus:ring-0 placeholder:text-gray-400"
           disabled={disabled}
           aria-label="Definition"
         />
@@ -97,10 +94,10 @@ const PossibleValueItemComponent = ({
         size="icon"
         onClick={onDelete}
         disabled={disabled}
-        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-all duration-200 text-red-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-30"
+        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 disabled:opacity-50"
         aria-label="Delete value"
       >
-        <Trash2 className="w-3.5 h-3.5" />
+        <Trash2 className="w-4 h-4" />
       </Button>
     </div>
   );
