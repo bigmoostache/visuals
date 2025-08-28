@@ -1,10 +1,13 @@
 
 import Grid from "./Grid";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 export default function Home() {
   return (
-    <main className="w-full h-full">
-      <Grid/>
-    </main>
+    <ErrorBoundary>
+      <main className="w-full h-full">
+        <Grid />
+      </main>
+    </ErrorBoundary>
   );
 }
