@@ -371,7 +371,7 @@ const PlanSection = ({
           {/* Leaf Content */}
           {isLeaf && 'contents' in section && (section.contents as any).leaf_bullet_points !== undefined && (
             <div className="space-y-3">
-              <WordCountInput
+              {/* <WordCountInput
                 initialWordCount={(section.contents as any).target_number_of_words || 250}
                 onWordCountChange={(count) => {
                   const currentContents = section.contents as any;
@@ -380,7 +380,7 @@ const PlanSection = ({
                     target_number_of_words: count 
                   });
                 }}
-              />
+              /> */}
               <BulletPointsInput
                 initialBulletText={(section.contents as any).leaf_bullet_points.join("\n")}
                 onBulletChange={(lines) => {
