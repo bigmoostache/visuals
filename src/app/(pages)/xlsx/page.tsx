@@ -1,11 +1,11 @@
 import { Suspense } from "react";
-import XLSXPage from "./XLSX";
+import SpreadsheetEditor from "./components/SpreadsheetEditor";
 
 export default function Home() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="w-screen h-screen flex items-center justify-center">Loading spreadsheet...</div>}>
       <main className="w-full h-full">
-        <XLSXPage/>
+        <SpreadsheetEditor />
       </main>
     </Suspense>
   );
