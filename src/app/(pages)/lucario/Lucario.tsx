@@ -29,6 +29,7 @@ export type PipelineStatus = 'anticipated' | 'pending' | 'success' | 'error' | '
 
 export interface Document {
   file_id: number;
+  entry_id?: number; // present when using ProjectFileEntry (one row per upload)
   parent_file_id?: number;
   direct_parent_file_id?: number;
   file_uuid: string;
@@ -37,7 +38,7 @@ export interface Document {
   file_ext: FileTypes;
   upload_date: string;
   pipeline_status: PipelineStatus;
-  ext_project_id: string;
+  ext_project_id?: string;
   context?: string;
   position?: number;
   description?: string;
@@ -154,9 +155,9 @@ const LucarioComponent = ({
       const updatedElements: { [key: number]: Document } = {};
       const updatedUuid2Position: { [key: string]: number } = {};
 
-      // Update or add documents based on the response
+      // Update or add documents based on the response. Use entry_id as key when present (one per upload).
       documents.forEach((document: Document) => {
-        const newId = document.local_document_identifier;
+        const newId = document.entry_id ?? document.local_document_identifier;
         updatedElements[newId] = document;
         updatedUuid2Position[document.file_uuid] = newId;
       });
@@ -175,8 +176,9 @@ const LucarioComponent = ({
     }
   };
 
-  const deleteFileFromLucario = async (url: string, key: string, file_id: number) => {
-    await fetch(`${url}/projects/${key}/${file_id}`, {
+  const deleteFileFromLucario = async (url: string, key: string, file_id: number, entry_id?: number) => {
+    const path = entry_id != null ? `${url}/projects/${key}/entry/${entry_id}` : `${url}/projects/${key}/${file_id}`;
+    await fetch(path, {
       method: 'DELETE',
       headers: {
         'accept': 'application/json'
@@ -675,7 +677,7 @@ const LucarioComponent = ({
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Documents</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Object.values(lucario.elements).map((doc: Document) => (
-            <LucarioElement key={doc.file_id} doc={doc} />
+            <LucarioElement key={doc.entry_id ?? doc.local_document_identifier} doc={doc} />
           ))}
         </div>
       </div>
