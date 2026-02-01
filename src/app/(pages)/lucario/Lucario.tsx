@@ -176,9 +176,8 @@ const LucarioComponent = ({
     }
   };
 
-  const deleteFileFromLucario = async (url: string, key: string, file_id: number, entry_id?: number) => {
-    const path = entry_id != null ? `${url}/projects/${key}/entry/${entry_id}` : `${url}/projects/${key}/${file_id}`;
-    await fetch(path, {
+  const deleteFileFromLucario = async (url: string, key: string, file_id: number) => {
+    await fetch(`${url}/projects/${key}/${file_id}`, {
       method: 'DELETE',
       headers: {
         'accept': 'application/json'

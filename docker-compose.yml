@@ -1,10 +1,11 @@
 services:
   visualsi:
+    image: visuals:lucario-fetch
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3001:3001"      
+      - "3001:3001"
 
 volumes:
   XXX-tiny-sso:
