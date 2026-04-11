@@ -3,9 +3,10 @@
 import React, { Suspense, useEffect, useState, useRef } from 'react';
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
+import { getFetchUrl } from '../utils/getFetchUrl';
 import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, Upload, X, Check, FileText, Loader2, Trash2 } from 'lucide-react';
+import { ChevronRight, Upload, X, Check, FileText, Loader2, Trash2, AlertCircle } from 'lucide-react';
 
 // Define TypeScript types matching the Pydantic models
 export type FileTypes = 
@@ -60,9 +61,10 @@ const LucarioComponentWrapper = () => {
   // Retrieve URL parameters
   const searchParams = useSearchParams()
   const fileUrl = searchParams.get('url')
+  const fetchUrl = getFetchUrl(fileUrl);
 
-  // Fetch the file blob
-  const { data } = useGetFile({ fetchUrl: fileUrl || '' });
+  // Fetch the file blob (proxy only for Spengler URLs)
+  const { data, isLoading: isLoadingFile, error: fetchError } = useGetFile({ fetchUrl });
   const { mutate, isLoading: isMutating } = usePatchFile({ fetchUrl: fileUrl || '' });
   const [lucario, setLucario] = useState<Lucario | null>(null);
   
@@ -98,6 +100,19 @@ const LucarioComponentWrapper = () => {
             saveLucario={saveLucario} 
             isMutating={isMutating} 
           />
+        </div>
+      </div>
+    </div>
+  ) : fetchError ? (
+    <div className='lucario-bg'>
+      <div className="min-h-screen flex items-center justify-center py-10">
+        <div className="lucario-card max-w-lg">
+          <div className="flex items-center gap-2 text-red-600 mb-2">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            <span className="font-medium">Failed to load Knowledge Base</span>
+          </div>
+          <p className="text-sm text-gray-600 break-words">{fetchError.message}</p>
+          <p className="text-xs text-gray-500 mt-2">If this is a Spengler link, the file server may be unreachable or require authentication.</p>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@
 import { useSearchParams } from 'next/navigation'
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
+import { getFetchUrl } from '../utils/getFetchUrl';
 import { useEffect, useState } from 'react'
 import { Suspense } from 'react'
 import useGetFileHead from '../(hooks)/useGetFileHead';
@@ -10,8 +11,9 @@ const Pdf = () => {
     // NO-CHANGE Retrieving URL
     const searchParams = useSearchParams()
     const url = searchParams.get('url')
+    const fetchUrl = getFetchUrl(url)
     // NO-CHANGE Retrieving BLOB
-    const { data } = useGetFile({fetchUrl: url as string})
+    const { data } = useGetFile({ fetchUrl: fetchUrl || '' })
 
     //const url2 = URL.createObjectURL(data);
     const [url2, setUrl2] = useState<string | null>(null);

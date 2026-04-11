@@ -2,6 +2,7 @@
 import {useSearchParams} from 'next/navigation';
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
+import { getFetchUrl } from '../utils/getFetchUrl';
 import {useEffect, useState} from 'react';
 import {Suspense} from 'react';
 
@@ -18,7 +19,8 @@ import ArticleCard from "@/app/(pages)/newsletter/components/article";
 const Newsletter = () => {
     const searchParams = useSearchParams();
     const url = searchParams.get('url');
-    const {data} = useGetFile({fetchUrl: url as string});
+    const fetchUrl = getFetchUrl(url);
+    const {data} = useGetFile({ fetchUrl: fetchUrl || '' });
     const [text, setText] = useState<string>('');
     const [jsonNL, setJsonNL] = useState<NewsletterInterface>();
     const [updatable, setUpdatable] = useState<boolean>(false);

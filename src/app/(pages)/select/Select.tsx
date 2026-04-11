@@ -29,6 +29,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
+import { getFetchUrl } from '../utils/getFetchUrl';
 
 // ==================== TYPES & CONSTANTS ====================
 
@@ -599,8 +600,9 @@ CriteriaDragOverlay.displayName = 'CriteriaDragOverlay';
 const SelectionCriteriaManager: React.FC = () => {
   const searchParams = useSearchParams();
   const url = searchParams.get('url');
+  const fetchUrl = getFetchUrl(url);
 
-  const { data: fileData } = useGetFile({ fetchUrl: url as string });
+  const { data: fileData } = useGetFile({ fetchUrl: fetchUrl || '' });
   const { mutate: saveFile, isLoading: isSaving, isSuccess } = usePatchFile({ 
     fetchUrl: url as string 
   });

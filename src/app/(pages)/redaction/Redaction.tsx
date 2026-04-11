@@ -2,6 +2,7 @@
 import { useSearchParams } from 'next/navigation'
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
+import { getFetchUrl } from '../utils/getFetchUrl';
 import { useEffect, useState } from 'react'
 import { Suspense } from 'react'
 
@@ -9,8 +10,9 @@ const Redaction = () => {
     // NO-CHANGE Retrieving URL
     const searchParams = useSearchParams()
     const url = searchParams.get('url')
+    const fetchUrl = getFetchUrl(url)
     // NO-CHANGE Retrieving BLOB
-    const { data } = useGetFile({fetchUrl: url as string})
+    const { data } = useGetFile({ fetchUrl: fetchUrl || '' })
     // Local states, you may modify this for other types
     const [text, setText] = useState<string>('');
     const [updatable, setUpdatable] = useState<boolean>(false);

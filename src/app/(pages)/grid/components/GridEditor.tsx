@@ -23,6 +23,7 @@ import {
 import { toast, Toaster } from 'sonner';
 import useGetFile from '../../(hooks)/useGetFile';
 import usePatchFile from '../../(hooks)/usePatchFile';
+import { getFetchUrl } from '../../utils/getFetchUrl';
 import { Grid, GridSection, CONSTANTS } from '../types';
 import { SectionCard } from './SectionCard';
 import { GridSkeleton } from './GridSkeleton';
@@ -32,10 +33,11 @@ import { createNewSection, ensureIds, removeIds, debounce } from '../utils';
 export const GridEditor = () => {
   const searchParams = useSearchParams();
   const url = searchParams.get('url');
+  const fetchUrl = getFetchUrl(url);
   
   // Data fetching hooks
   const { data, isLoading: isLoadingFile, error: loadError } = useGetFile({ 
-    fetchUrl: url as string,
+    fetchUrl: fetchUrl || '',
     onSucess: () => toast.success('File loaded successfully')
   });
   

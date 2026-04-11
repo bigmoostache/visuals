@@ -6,6 +6,7 @@ import { json } from 'stream/consumers';
 import { useSearchParams } from 'next/navigation';
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
+import { getFetchUrl } from '../utils/getFetchUrl';
 import { Save } from 'lucide-react';
 import { DataStructure, DataStructureEl } from './(components)/DataStructure';
 
@@ -13,9 +14,10 @@ const Page = () => {
     // NO-CHANGE Retrieving URL
     const searchParams = useSearchParams()
     const url = searchParams.get('url')
+    const fetchUrl = getFetchUrl(url)
     const {mutate, isLoading, isSuccess} = usePatchFile({ fetchUrl: url as string });
     // NO-CHANGE Retrieving BLOB
-    const { data } = useGetFile({fetchUrl: url as string})
+    const { data } = useGetFile({ fetchUrl: fetchUrl || '' })
     // parse the json
     const [jsonNL, setJsonNL] = useState<DataStructure>();
     useEffect(() => {

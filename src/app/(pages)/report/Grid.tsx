@@ -1,6 +1,7 @@
 "use client";
 import { useSearchParams } from 'next/navigation';
 import useGetFile from '../(hooks)/useGetFile';
+import { getFetchUrl } from '../utils/getFetchUrl';
 import { useEffect, useState } from 'react';
 import { Suspense } from 'react';
 import { Clock, User, GitBranch, Database, Rocket, ExternalLink, Play, Loader2, Calendar, Timer } from 'lucide-react';
@@ -38,9 +39,9 @@ const ExecutionReportViewerC = () => {
   // Retrieving URL
   const searchParams = useSearchParams();
   const url = searchParams.get('url');
-  
+  const fetchUrl = getFetchUrl(url);
   // Retrieving BLOB
-  const { data } = useGetFile({ fetchUrl: url as string });
+  const { data } = useGetFile({ fetchUrl: fetchUrl || '' });
   
   // Parse the JSON
   const [executionReport, setExecutionReport] = useState<ExecutionReport | null>(null);

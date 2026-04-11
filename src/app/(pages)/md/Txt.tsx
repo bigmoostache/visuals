@@ -2,6 +2,7 @@
 import { useSearchParams } from 'next/navigation'
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
+import { getFetchUrl } from '../utils/getFetchUrl';
 import { useEffect, useState } from 'react'
 import { Suspense } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -97,9 +98,10 @@ const Txt = () => {
     // NO-CHANGE Retrieving URL
     const searchParams = useSearchParams()
     const url = searchParams.get('url')
+    const fetchUrl = getFetchUrl(url)
     // NO-CHANGE Retrieving BLOB
-    const { data } = useGetFile({fetchUrl: url as string})
-    const { data: head } = useGetFileHead({fetchUrl: url as string})
+    const { data } = useGetFile({ fetchUrl: fetchUrl || '' })
+    const { data: head } = useGetFileHead({ fetchUrl: fetchUrl || '' })
     const editable = head ? head.editable : true;
     // Local states, you may modify this for other types
     const [text, setText] = useState<string>('');

@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
+import { getFetchUrl } from '../utils/getFetchUrl';
 import { Suspense, useEffect, useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -484,7 +485,8 @@ const PlanSection = ({
 const PlanPage = () => {
   const searchParams = useSearchParams();
   const url = searchParams.get('url');
-  const { data } = useGetFile({ fetchUrl: url as string });
+  const fetchUrl = getFetchUrl(url);
+  const { data, error: fetchError } = useGetFile({ fetchUrl: fetchUrl || '' });
   const { mutate, isLoading } = usePatchFile({ fetchUrl: url as string });
 
   const [plan, setPlan] = useState<PlanInterface | null>(null);
@@ -580,6 +582,15 @@ const PlanPage = () => {
                   isMutating={isLoading}
                 />
             )}
+          </div>
+        ) : fetchError ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center max-w-md bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+              <AlertCircle className="h-10 w-10 text-red-500 mx-auto mb-3" />
+              <p className="text-slate-800 font-medium">Failed to load document plan</p>
+              <p className="text-sm text-slate-600 mt-2 break-words">{fetchError.message}</p>
+              <p className="text-xs text-slate-500 mt-2">If this is a Spengler link, the file server may be unreachable or require authentication.</p>
+            </div>
           </div>
         ) : (
           <div className="flex items-center justify-center min-h-[60vh]">

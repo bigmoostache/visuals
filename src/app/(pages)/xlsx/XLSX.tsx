@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import useGetFile from '../(hooks)/useGetFile';
 import usePatchFile from '../(hooks)/usePatchFile';
+import { getFetchUrl } from '../utils/getFetchUrl';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 
@@ -19,7 +20,8 @@ function columnName(n: number) {
 export default function XLSXPage() {
   const searchParams = useSearchParams();
   const url = searchParams.get('url');
-  const { data } = useGetFile({fetchUrl: url as string});
+  const fetchUrl = getFetchUrl(url);
+  const { data } = useGetFile({ fetchUrl: fetchUrl || '' });
   const { mutate, isLoading, isSuccess } = usePatchFile({fetchUrl: url as string});
   
   const [workbook, setWorkbook] = useState<XLSX.WorkBook>();

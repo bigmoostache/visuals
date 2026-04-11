@@ -17,12 +17,16 @@ const useGetFile = ({ fetchUrl, onSucess }: Props) => {
         refetch
     } = useQuery<any, Error>({
         queryKey: [fetchUrl],
+        enabled: !!fetchUrl,
         queryFn: async () => {
             const res = await fetch(fetchUrl, {
                 method: "GET",
                 credentials: includeCredentials ? "include" : "omit", // Only include credentials when needed
             });
-           
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Failed to load: ${res.status} ${res.statusText}${text ? ` — ${text.slice(0, 100)}` : ''}`);
+            }
             const blob = await res.blob();
             if (onSucess) {
                 onSucess();
